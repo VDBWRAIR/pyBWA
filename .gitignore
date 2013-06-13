@@ -1,0 +1,4 @@
+*.pyc
+*.swp
+ref.fa.*
+input.fastq
