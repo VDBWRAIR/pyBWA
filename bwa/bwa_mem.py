@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from subprocess import check_output
 
 import bwa
+import seqio
 
 import logging
 import os.path
@@ -10,12 +11,22 @@ import sys
 logging.basicConfig( level=logging.DEBUG )
 logger = logging.getLogger( os.path.splitext( __file__ )[0] )
 
+def compile_reads( reads ):
+    '''
+        Compile all given reads from directory of reads or just return reads if it is fastq
+        If reads is sff file then convert to fastq
+
+        @param reads - Directory/file of .fastq or .sff
+        @return fastq with all reads from reads
+    '''
+    return seqio.sffs_to_fastq( seqio.get_reads( reads ) )
+
 def main():
     args = parse_args().__dict__
 
     ref_file = args['index']
     del args['index']
-    read_path = args['reads']
+    read_path = compile_reads( args['reads'] )
     del args['reads']
     mates_path = args['mates']
     del args['mates']

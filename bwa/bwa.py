@@ -145,18 +145,14 @@ class BWA( object ):
             raise ValueError( "{} is not a valid input file".format(inputpath) )
 
     def reads_in_file( self, filename ):
-        reads = 0
+        ftype = 'fasta'
         with open( filename ) as fh:
-            # Line start should be > or @
-            linestart = ''
-            for line in fh:
-                if reads == 0:
-                    linestart = line[0]
-                    if linestart not in ('>','@'):
-                        break
-                if line.startswith( linestart ):
-                    reads += 1
-        return reads
+            firstline = fh.readline()
+            if firstline.startswith( '>' ):
+                ftype = 'fasta'
+            elif firstline.startswith( '@' ):
+                ftype = 'fastq'
+        return sum( [1 for seq in SeqIO.parse( filename, ftype )] )
 
 class BWAIndex( BWA ):
     def __init__( self, *args, **kwargs ):
