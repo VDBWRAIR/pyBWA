@@ -2,13 +2,20 @@ from Bio import SeqIO
 
 import logging
 import re
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, check_output
 import tempfile
 import os
 import os.path
 import sys
 
 logger = logging.getLogger( __name__ )
+
+def which_bwa( ):
+    ''' Return output of which bwa '''
+    return check_output( ['which', 'bwa'] ).strip()
+
+def bwa_usage():
+    return check_output( ['bwa', 'mem'] ).strip()
 
 class BWA( object ):
     # Options that are required

@@ -1,55 +1,27 @@
 from nose.tools import eq_, raises
-from bwa import BWA, BWAMem, BWAIndex
+from ..bwa import BWA, BWAMem, BWAIndex
 
 import tempfile
 import shutil
 import os
 import os.path
 import sys
-import subprocess
-import gzip
 import glob
 
-def get_bwa_path( ):
-    ''' Run which command to get bwa path '''
-    try:
-        return subprocess.check_output( ['which', 'bwa'] ).strip()
-    except subprocess.CalledProcessError as e:
-        return ''
+import util
+from util import get_bwa_path, INPUT_PATH, REF_PATH, BWA_PATH, test_bwa_available, ungzip
 
-# Some useful stuff
-this_dir = os.path.dirname( os.path.abspath( __file__ ) )
-INPUT_PATH = os.path.join( this_dir, 'input.fastq.gz' )
-REF_PATH = os.path.join( this_dir, 'ref.fa' )
-BWA_PATH = get_bwa_path()
-
-def test_bwa_available( ):
-    ''' Make sure bwa is in path and available '''
-    assert get_bwa_path != ''
-
-def ungzip( filepath ):
-    bn, ext = os.path.splitext( filepath )
-    with open( bn, 'wb' ) as fo:
-        with gzip.open( filepath ) as fi:
-            fo.write( fi.read() )
-    return bn
 
 class BWASubTest( BWA ):
     ''' Test subclass to get around required_args exception '''
     def required_args( self ):
         pass
 
-class Base( object ):
+class BaseBWA( util.Base ):
     @classmethod
     def setUpClass( self ):
-        self.tempdir = tempfile.mkdtemp()
-        os.chdir( self.tempdir )
+        super( BaseBWA, self ).setUpClass()
         self.bwa_path = self.mkbwa( 'test' )
-
-    @classmethod
-    def tearDownClass( self ):
-        os.chdir( '/' )
-        shutil.rmtree( self.tempdir )
 
     @classmethod
     def mkbwa( self, echomsg ):
@@ -59,13 +31,7 @@ class Base( object ):
         os.chmod( 'bwa', 0700 )
         return os.path.abspath( 'bwa' )
 
-    def create_fakefasta( self, filename, readno ):
-        ''' Create readno fasta sequences '''
-        with open( filename, 'w' ) as fh:
-            for i in range( readno ):
-                fh.write( '>seq{}\nATGC\n'.format(i) )
-
-class TestBWA( Base ):
+class TestBWA( BaseBWA ):
     @classmethod
     def setUpClass( self ):
         super( TestBWA, self ).setUpClass()
@@ -166,7 +132,7 @@ this has Usage:  bwa
         path = self.mkbwa( 'BWA' )
         eq_( 0, BWASubTest( bwa_path=path, command='mem' ).run() )
 
-class TestBWAMem( Base ):
+class TestBWAMem( BaseBWA ):
     @classmethod
     def setUpClass( self ):
         super( TestBWAMem, self ).setUpClass()
@@ -259,7 +225,7 @@ class TestBWAMem( Base ):
         bwa = BWAMem( self.fa, self.fa2, bwa_path=BWA_PATH )
         eq_( 1, bwa.bwa_return_code( '[main] Version: 0.7.4-r385' ) )
 
-class TestBWAIndex( Base ):
+class TestBWAIndex( BaseBWA ):
     @raises( ValueError )
     def test_nonexistfasta( self ):
         path = '/does/not/exist.fa'
