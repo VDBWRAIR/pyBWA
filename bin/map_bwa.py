@@ -1,4 +1,4 @@
 #!/usr/bin/env python
 
-from bwa import map_bwa
-map_bwa.main()
+from bwa import bwa_mem
+bwa_mem.main()

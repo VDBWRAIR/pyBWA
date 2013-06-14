@@ -250,3 +250,15 @@ class TestBWAIndex( BaseBWA ):
         eq_( 0, bwa.run() )
         indexes = glob.glob( ref + '.*' ) 
         assert indexes != []
+
+    def test_nooutputfile( self ):
+        ''' Ensure no output file is created '''
+        os.mkdir( 'dir1' )
+        os.chdir( 'dir1' )
+        ref = 'ref.fa'
+        # Make copy in tempdir
+        shutil.copy( REF_PATH, 'ref.fa' )
+        bwa = BWAIndex( ref, bwa_path=BWA_PATH )
+        eq_( 0, bwa.run() )
+        assert not os.path.exists( 'bwa.sai' )
+        os.chdir( '..' )

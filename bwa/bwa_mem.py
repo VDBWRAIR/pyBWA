@@ -19,6 +19,8 @@ def main():
     del args['reads']
     mates_path = args['mates']
     del args['mates']
+    output_file = args['output']
+    del args['output']
     args['bwa_path'] = bwa.which_bwa()
 
     ret = 1
@@ -36,9 +38,9 @@ def main():
     ret = 1
     try:
         if mates_path:
-            ret = bwa.BWAMem( ref_file, read_path, mates_path, **args ).run()
+            ret = bwa.BWAMem( ref_file, read_path, mates_path, **args ).run( output_file )
         else:
-            ret = bwa.BWAMem( ref_file, read_path, **args ).run()
+            ret = bwa.BWAMem( ref_file, read_path, **args ).run( output_file )
     except ValueError as e:
         logger.error( str(e) )
 
@@ -51,7 +53,7 @@ def main():
         logger.info( "Options: {}".format(args) )
 
 def parse_args( ):
-    parser = ArgumentParser( epilog='Python wrapper around bwa mem' ), usage=bwa.bwa_usage() )
+    parser = ArgumentParser( epilog='Python wrapper around bwa mem' )
 
     parser.add_argument( '-t', type=int, default=1, help='number of threads' )
     parser.add_argument( '-k', type=int, default=19, help='minimum seed length' )
@@ -75,6 +77,7 @@ def parse_args( ):
     parser.add_argument( '-C', type=bool, default=False, help='append FASTA/FASTQ comment to SAM output' )
     parser.add_argument( '-H', type=bool, default=False, help='hard clipping' )
     parser.add_argument( '-M', type=bool, default=False, help='mark shorter split hits as secondary (for Picard/GATK compatibility)' )
+    parser.add_argument( '--output', metavar='output_file', default='bwa.sai', help='Output file to put sam output in[Default:bwa.sai]' )
 
     parser.add_argument( dest='index', help='Reference location' )
     parser.add_argument( dest='reads', help='Read or directory of reads to be mapped(.fastq and .sff supported)' )

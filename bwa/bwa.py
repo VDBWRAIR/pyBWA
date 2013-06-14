@@ -186,6 +186,15 @@ class BWAIndex( BWA ):
             return 1
         return 0
 
+    def run( self ):
+        '''
+            Call super and then remove output file
+            hackish
+        '''
+        ret = super( BWAIndex, self ).run( 'removeme.sai' )
+        os.unlink( 'removeme.sai' )
+        return ret
+
 class BWAMem( BWA ):
     def __init__( self, *args, **kwargs ):
         ''' Injects mem command and runs super '''
