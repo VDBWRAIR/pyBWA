@@ -59,13 +59,6 @@ class TestBWA( BaseBWA ):
         print bwa.required_options_values
         eq_( self.rops, erop )
 
-    def test_compilebwaoptions( self ):
-        ''' Should simply return a list of [k1, v1, k1, v1...] '''
-        ops = {'-t': 2, '-a': '2'}
-        bwa = BWASubTest( **dict( self.rops, **ops ) )
-        bwa.compile_bwa_options()
-        eq_( sorted( ['-t', 2, '-a', '2'] ), sorted( bwa.options ) )
-
     def test_bwareturncode_success( self ):
         ''' Just check to make sure not having usage statements works '''
         stderr = '''This does not have Ussage:  bbwa in it'''
@@ -96,6 +89,34 @@ this has Usage:  bwa
         with open( default_output_fn ) as fh:
             eq_( output_text, fh.read().strip() )
         os.unlink( default_output_fn )
+
+    def test_runbwa_optionsargs( self ):
+        ''' Make sure options and args sent in are actually used '''
+        bwa_path = self.mkbwa( '$@' )
+        self.inst.run_bwa( [bwa_path], ['a','b'], ['c','d'], 'output' )
+        with open( 'output' ) as fh:
+            result_output = fh.read().strip()
+        eq_( 'a b c d', result_output )
+
+    def test_compilebwaoptions( self ):
+        ''' Make sure options supplied to constructor make it through to running '''
+        bwa_path = self.mkbwa( '$@' )
+        ops = {'t':3, 'a':5, 'f':True, 'j':1, 'bwa_path':bwa_path, 'command':'cmd'}
+        bwa = BWASubTest( **ops )
+        del ops['bwa_path']
+        del ops['command']
+        bwa.run( 'output' )
+        with open( 'output' ) as fh:
+            result_output = fh.read().strip()
+        print "Expect: {}".format(ops)
+        print "Result: {}".format(result_output)
+        for op,val in ops.items():
+            uval = ''
+            val=str(val)
+            if val.lower() not in ('true','false'):
+                uval = ' ' + val
+            opval = '-{}{}'.format(op,uval) 
+            assert opval in result_output, '{} not in {}'.format(opval, result_output)
 
     @raises( ValueError )
     def test_runbwa_invalidpath( self ):
@@ -178,6 +199,17 @@ class TestBWAMem( BaseBWA ):
     def test_requiredargs_third_invalid( self ):
         ''' Test reads file is valid path to file '''
         BWAMem( self.fa, self.fa2, '/invalid/path/in.fa', bwa_path=self.bwa_path )
+
+    def test_optionspassed( self ):
+        ''' Make sure all options passed make it to bwa '''
+        bwa = self.mkbwa( '$@' )
+        mem = BWAMem( self.fa, self.fa2, t=5, a=3, bwa_path=bwa )
+        mem.run( 'output' )
+        with open( 'output' ) as fh:
+            result_output = fh.read().strip()
+        assert '-t 5' in result_output
+        assert '-a 3' in result_output
+        assert self.fa + ' ' + self.fa2 in result_output
 
     def test_optionalthird( self ):
         ''' Test that given a correct third argument it still runs '''

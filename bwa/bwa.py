@@ -47,6 +47,8 @@ class BWA( object ):
         self.required_options_values = []
         # Parse and remove required_options
         self.required_options()
+        # Setup options from the rest of the kwargs
+        self.compile_bwa_options()
         # This needs to be implemented in subclass
         self.required_args()
 
@@ -74,8 +76,13 @@ class BWA( object ):
         '''
         # Build up self.options from kwargs
         for op, val in self.kwargs.items():
-            self.options.append( op )
-            self.options.append( val )
+            # Append dash to option
+            self.options.append( '-'+op )
+            # Options should all be strings(just being passed to command line anyways)
+            val = str(val)
+            # True false values only have option
+            if val.lower() not in ('true','false'):
+                self.options.append( val )
 
     def bwa_return_code( self, output ):
         '''
@@ -97,7 +104,7 @@ class BWA( object ):
 
         # If there is a match return 1
         if m:
-            logger.warning( "BWA Returned Usage" )
+            logger.warning( "BWA Returned Usage help instead of running. This could indicate an error." )
             return 2
         # Otherwise return 0
         return 0
