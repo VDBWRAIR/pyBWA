@@ -101,7 +101,7 @@ this has Usage:  bwa
     def test_compilebwaoptions( self ):
         ''' Make sure options supplied to constructor make it through to running '''
         bwa_path = self.mkbwa( '$@' )
-        ops = {'t':3, 'a':5, 'f':True, 'j':1, 'bwa_path':bwa_path, 'command':'cmd'}
+        ops = {'R':None, 'E':'', 't':3, 'a':5, 'f':True, 'j':1, 'bwa_path':bwa_path, 'command':'cmd'}
         bwa = BWASubTest( **ops )
         del ops['bwa_path']
         del ops['command']
@@ -115,8 +115,11 @@ this has Usage:  bwa
             val=str(val)
             if val.lower() not in ('true','false'):
                 uval = ' ' + val
-            opval = '-{}{}'.format(op,uval) 
-            assert opval in result_output, '{} not in {}'.format(opval, result_output)
+            if val.lower() not in ('','none'):
+                opval = '-{}{}'.format(op,uval) 
+                assert opval in result_output, '{} not in {}'.format(opval, result_output)
+            else:
+                assert op not in result_output, '{} should not be in {}'.format(op, result_output)
 
     @raises( ValueError )
     def test_runbwa_invalidpath( self ):

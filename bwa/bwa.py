@@ -76,6 +76,9 @@ class BWA( object ):
         '''
         # Build up self.options from kwargs
         for op, val in self.kwargs.items():
+            # None type values should be ignored
+            if val is None or val == '':
+                continue
             # Append dash to option
             self.options.append( '-'+op )
             # Options should all be strings(just being passed to command line anyways)
