@@ -155,6 +155,30 @@ this has Usage:  bwa
         ''' Make sure run is working '''
         path = self.mkbwa( 'BWA' )
         eq_( 0, BWASubTest( bwa_path=path, command='mem' ).run() )
+    
+    def readsinfiletest( self, fafile, expectedlines ):
+        eq_( self.inst.reads_in_file( fafile ), expectedlines )
+
+    def test_readsinfile_fasta( self ):
+        ''' Make sure simple fasta is counted correctly '''
+        fh = open( 'fasta.fa', 'w' )
+        fh.write( '>seq1\nABCD\n>seq2ACDE\n' )
+        fh.close()
+        self.readsinfiletest( 'fasta.fa', 2 )
+
+    def test_readsinfile_fastq( self ):
+        ''' Make sure a simple fastq file is counted correctly '''
+        fh = open( 'fasta.fastq', 'w' )
+        fh.write( '@seq1\nABCD\n+\nIIII\n@seq2\nACDE\n+\nIIII\n' )
+        fh.close()
+        self.readsinfiletest( 'fasta.fastq', 2 )
+
+    def test_readsinfile_fastq2( self ):
+        ''' @ symbol is part of quality and can occur at beginning of lines '''
+        fh = open( 'fasta.fastq', 'w' )
+        fh.write( '@seq1\nABCD\n+\n@III\n@seq2\nACDE\n+\nIIII\n' )
+        fh.close()
+        self.readsinfiletest( 'fasta.fastq', 2 )
 
 class TestBWAMem( BaseBWA ):
     @classmethod
