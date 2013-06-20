@@ -7,9 +7,11 @@ import seqio
 import logging
 import os.path
 import sys
+import fnmatch
+import glob
 
 logging.basicConfig( level=logging.DEBUG )
-logger = logging.getLogger( os.path.splitext( __file__ )[0] )
+logger = logging.getLogger( os.path.basename( os.path.splitext( __file__ )[0] ) )
 
 def compile_reads( reads ):
     '''
@@ -20,20 +22,51 @@ def compile_reads( reads ):
         @return fastq with all reads from reads
     '''
     if os.path.isdir( reads ):
-        return seqio.sffs_to_fastq( seqio.get_reads( reads ) )
+        reads = seqio.get_reads( reads )
+
+    logger.info( "Concatting and Converting {} to fastq".format(reads) )
+    return seqio.sffs_to_fastq( reads )
+
+def compile_refs( refs ):
+    '''
+        Compile all given refs into a single file to be indexed
+
+        @param refs - Directory/file of fasta formatted files
+        @return path to concatted indexed reference file
+    '''
+    ref_files = []
+    ref_extensions = ('.fa', '.fasta', '.fna', '.fas')
+
+    if os.path.isdir( refs ):
+        logger.info( "Compiling and concatting refs inside of {}".format(refs) )
+        files = glob.glob( os.path.join( refs, '*' ) )
+        logger.debug( "All files inside of {}: {}".format( files, refs ) )
+        ref_files = [f for f in files if os.path.splitext(f)[1] in ref_extensions]
+        logger.debug( "Filtering files down to only files with extensions in {}".format(ref_extensions) )
+        logger.debug( "Filtered files to concat: {}".format( ref_files ) )
+        try:
+            seqio.concat_files( ref_files, 'reference.fa' )
+        except (OSError,IOError,ValueError) as e:
+            logger.error( "There was an error with the references in {}".format(refs) )
+            logger.error( str( e ) )
+            sys.exit(1)
+        return 'reference.fa'
     else:
-        return reads
+        return refs
 
 def main():
     args = parse_args().__dict__
 
-    ref_file = args['index']
+    ref_file = compile_refs( args['index'] )
     del args['index']
+
     read_path = compile_reads( args['reads'] )
     del args['reads']
+
     mates_path = args['mates']
     del args['mates']
     output_file = args['output']
+
     del args['output']
     args['bwa_path'] = bwa.which_bwa()
 
