@@ -4,6 +4,7 @@ from Bio import SeqIO
 import shutil
 import os
 import os.path
+import glob
 
 import util
 from .. import seqio
@@ -31,8 +32,16 @@ class SeqIOBase( util.Base ):
     @classmethod
     def setUpClass( self ):
         super( SeqIOBase, self ).setUpClass()
-        self.sff_input = 'input.sff'
+        self.sff_input = os.path.join( self.tempdir, 'input.sff' )
         util.ungzip( util.INPUT_SFF_PATH, self.sff_input )
+
+    def setUp( self ):
+        os.mkdir( 'tests' )
+        os.chdir( 'tests' )
+
+    def tearDown( self ):
+        os.chdir( self.tempdir )
+        shutil.rmtree( 'tests' )
 
 class TestSffsToFastq( SeqIOBase ):
     @raises( ValueError )
@@ -122,3 +131,60 @@ class TestGetReads( SeqIOBase ):
         for read in reads:
             open( read, 'w' ).close()
         eq_( sorted(reads), sorted(seqio.get_reads( 'hasreads' )) )
+
+class TestConcatFiles( SeqIOBase ):
+    def writesomefiles( self, content, numfiles=3 ):
+        ''' Write 3 files all with content in them and then return list of their paths '''
+        os.mkdir( 'files' )
+        os.chdir( 'files' )
+        # Write a few files
+        for i in range( numfiles ):
+            with open( str(i), 'w' ) as fh:
+                fh.write( content )
+        os.chdir( '../' )
+        return glob.glob( 'files/*' )
+        
+    @raises( ValueError )
+    def test_emptyfilelist( self ):
+        ''' filelist is [] '''
+        seqio.concat_files( [], 'outfile.cat' )
+
+    @raises( ValueError )
+    def test_invalidfilelist( self ):
+        ''' fillist is not a list '''
+        seqio.concat_files( self.sff_input, 'outfile.cat' )
+
+    @raises( ValueError )
+    def test_doesnotexistsome( self ):
+        ''' file in filelist does not exist but others do '''
+        filelist = self.writesomefiles('test') + ['idontexist']
+        seqio.concat_files( filelist, 'output' )
+
+    @raises( ValueError )
+    def test_invalidoutputfile( self ):
+        ''' outputfile is not a string '''
+        filelist = self.writesomefiles( 'test' )
+        seqio.concat_files( filelist, ['output'] )
+
+    @raises( seqio.EmptyFileError )
+    def test_emptyoutputfile( self ):
+        ''' filelist containes all empty files '''
+        filelist = self.writesomefiles( '' )
+        seqio.concat_files( filelist, 'output' )
+
+    def test_emptyoutputfile_deleteafter( self ):
+        ''' If output file was empty and raised error, it should clean up after itself '''
+        filelist = self.writesomefiles( '' )
+        try:
+            seqio.concat_files( filelist, 'output' )
+            assert False
+        except seqio.EmptyFileError:
+            assert not os.path.exists( 'output' ), 'output file still exists'
+
+    def test_doesitwork( self ):
+        ''' Does it actually concat files '''
+        content = 'ContentLine1\nContentLine2\n'
+        filelist = self.writesomefiles( content, 3 )
+        seqio.concat_files( filelist, 'output' )
+        with open( 'output' ) as fh:
+            eq_( content * 3, fh.read() )

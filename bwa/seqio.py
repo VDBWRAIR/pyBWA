@@ -4,6 +4,10 @@ import os
 import sys
 import os.path
 import glob
+import shutil
+
+class EmptyFileError( Exception ):
+    pass
 
 def sffs_to_fastq( sffs, output='sff.fastq' ):
     '''
@@ -46,3 +50,39 @@ def get_reads( dir_path ):
     if not os.path.isdir( dir_path ):
         raise ValueError( "{} is not a valid directory".format(dir_path) )
     return glob.glob( os.path.join( dir_path, '*.sff' ) ) + glob.glob( os.path.join( dir_path, '*.fastq' ) ) 
+
+def concat_files( filelist, outputfile ):
+    '''
+        Duplicate cat *filelist > outputfile
+        Don't forget that the files in filelist could end with 2 newlines and thus put empty lines
+        into your concatted file. Could be painful with fasta, fastq files
+        
+        @raises OSError if any fo filelist or outputfile cannot be read/written
+        @raises EmptyFileError if outputfile ends up empty
+        @raises ValueError if any of filelist are not valid files or if outputfile is not valid
+        @param filelist - List of valid files to cat into outputfile.
+        @param outputfile - File path to put concatted output into
+    '''
+    if not isinstance( filelist, list ) or len( filelist ) == 0:
+        raise ValueError( "{} is not a valid list of files to concat".format(filelist) )
+
+    if not isinstance( outputfile, str ):
+        raise ValueError( "{} is not a valid output path".format(outputfile) )
+
+    # Concat all the found files
+    # Could raise IOError or OSError as we are using open on files
+    # that are not checked to see if they have perms to read/write
+    with open( outputfile, 'wb' ) as fh:
+        for f in filelist:
+            try:
+                with open( f, 'rb' ) as fr:
+                    shutil.copyfileobj( fr, fh )
+            except (IOError,OSError) as e:
+                if e.errno == 2:
+                    raise ValueError( "{} does not exist".format(f) )
+                os.unlink( outputfile )
+                raise e
+
+    if os.stat( outputfile ).st_size == 0:
+        os.unlink( outputfile )
+        raise EmptyFileError( "Empty files given to concat" )
