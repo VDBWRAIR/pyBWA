@@ -54,6 +54,8 @@ def compile_refs( refs ):
     '''
         Compile all given refs into a single file to be indexed
 
+        @TODO -- Write tests
+
         @param refs - Directory/file of fasta formatted files
         @return path to concatted indexed reference file
     '''
@@ -96,12 +98,12 @@ def index_ref( ref ):
         @param ref - Reference file path to index
     '''
     # Don't reindex an already indexed ref
-    if bwa.is_indexed( ref ):
+    if is_indexed( ref ):
         return
 
     logger.info( "Indexing {}".format(ref) )
     try:
-        ret = bwa.BWAIndex( ref, bwa_path=bwa.which_bwa() ).run()
+        ret = BWAIndex( ref, bwa_path=which_bwa() ).run()
     except ValueError as e:
         logger.error( e )
 
