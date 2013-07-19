@@ -7,14 +7,54 @@ import tempfile
 import os
 import os.path
 import sys
+import glob
 
 logger = logging.getLogger( __name__ )
 
+def is_indexed( ref ):
+    '''
+        Checks to see if a given reference is indexed already
+
+        @param - Refrence file name
+        @return True if ref is indexed, False if not
+    '''
+    ref_ext = ('.amb', '.ann', '.bwt', '.pac', '.sa')
+    ref_indexes = glob.glob( ref + '.*' )
+
+    return len( ref_indexes ) != 0 and all( [True for index in ref_indexes if os.path.splitext( index )[1] in ref_ext] )
+
+def index_ref( ref ):
+    '''
+        Indexes a given reference
+
+        @param ref - Reference file path to index
+    '''
+    # Don't reindex an already indexed ref
+    if bwa.is_indexed( ref ):
+        return
+
+    logger.info( "Indexing {}".format(ref) )
+    try:
+        ret = bwa.BWAIndex( ref, bwa_path=bwa.which_bwa() ).run()
+    except ValueError as e:
+        logger.error( e )
+
+    if ret != 0:
+        logger.error( "Error running bwa index on {}".format( ref ) )
+        sys.exit( ret )
+    else:
+        logger.info( "bwa index ran on {}".format(ref) )
+
 def which_bwa( ):
-    ''' Return output of which bwa '''
+    '''
+        Return output of which bwa
+    '''
     return check_output( ['which', 'bwa'] ).strip()
 
 def bwa_usage():
+    '''
+        Returns the output of just running bwa mem from command line
+    '''
     return check_output( ['bwa', 'mem'] ).strip()
 
 class BWA( object ):
@@ -54,10 +94,14 @@ class BWA( object ):
 
     def required_args( self ):
         ''' Sets self.args '''
-        raise NotImplementedError( "This class is intended to be subclassed and not instantiated directly" )
+        raise NotImplementedError( "This class is intended to be subclassed " \
+                "and not instantiated directly" )
     
     def required_options( self ):
-        ''' Parse out REQUIRED_OPTIONS from kwargs and set them in self.required_options_values '''
+        '''
+            Parse out REQUIRED_OPTIONS from kwargs and set them in 
+            self.required_options_values
+        '''
         try:
             # Build up the values in order they appear in REQUIRED_OPTIONS
             for op in self.REQUIRED_OPTIONS:
@@ -93,12 +137,13 @@ class BWA( object ):
             Since it seems that bwa does not set return codes we have to parse
             stderr output instead
 
-            If the following regex is found then the Usage statement was printed which indicates a failure of 
-             one of the options:
+            If the following regex is found then the Usage statement was printed 
+             which indicates a failure of one of the options:
                 ^Usage:\s+bwa
             
-            Subclasses need to implement this as well and call this but they need to parse the rest of the output
-            if this returns success in order to tell if the algorithm ran correctly or not
+            Subclasses need to implement this as well and call this but they need 
+            to parse the rest of the output if this returns success in order to 
+            tell if the algorithm ran correctly or not
         
             @returns 0 if no usage was found, 1 if usage was found
         '''
@@ -107,21 +152,29 @@ class BWA( object ):
 
         # If there is a match return 1
         if m:
-            logger.warning( "BWA Returned Usage help instead of running. This could indicate an error." )
+            logger.warning( "BWA Returned Usage help instead of running. " \
+                "This could indicate an error." )
             return 2
         # Otherwise return 0
         return 0
 
     def run( self, output_file='bwa.sai' ):
-        ''' Call run_bwa lazily '''
-        return self.run_bwa( self.required_options_values, self.options, self.args, output_file )
+        '''
+            Wrapper function to make running bwa easier so you don't have to supply
+            a bunch of arguments
+
+            @param output_file - The file path to write the sai output to
+            @returns output of self.run_bwa
+        '''
+        return self.run_bwa( self.required_options_values, self.options, 
+            self.args, output_file )
 
     def run_bwa( self, required_options, options_list, args_list, output_file='bwa.sai' ):
         '''
-            required_options - Should correspond to self.REQUIRED_OPTIONS
-            options_list - Full options for bwa as a list (ex. ['mem', '-t', '2'])
-            args_list - Required arguments that come after options
-            output_file - Output location for stdout
+            @param required_options - Should correspond to self.REQUIRED_OPTIONS
+            @param options_list - Full options for bwa as a list (ex. ['mem', '-t', '2'])
+            @param args_list - Required arguments that come after options
+            @param output_file - Output location for stdout
 
             @returns 0 for success, 2 if incorrect options
 
@@ -144,8 +197,12 @@ class BWA( object ):
         return self.bwa_return_code( stderr )
 
     def validate_indexed_fasta( self, fastapath ):
-        ''' Ensure fastapath is valid path and is bwa index'd '''
-        if not os.path.exists( fastapath + '.bwt' ):
+        '''
+            Make sure fastapath is a valid path and already has an index
+
+            @param fastapath - Path to fasta file
+        '''
+        if not is_indexed( fastapath ):
             raise ValueError( "{} does not have an index".format(fastapath) )
         if not os.path.exists( fastapath ):
             raise ValueError( "{} does not exist".format(fastapath) )

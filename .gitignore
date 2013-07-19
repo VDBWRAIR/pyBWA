@@ -2,3 +2,9 @@
 *.swp
 ref.fa.*
 input.fastq
+bwa.sai
+findme.fasta
+primers.fna
+sff.fasta
+sff.fastq
+sffone.fasta
