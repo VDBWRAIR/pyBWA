@@ -1,5 +1,7 @@
 from nose.tools import eq_, raises
 from ..bwa import BWA, BWAMem, BWAIndex
+from .. import bwa
+from .. import seqio
 
 import tempfile
 import shutil
@@ -10,7 +12,6 @@ import glob
 
 import util
 from util import get_bwa_path, INPUT_PATH, REF_PATH, BWA_PATH, test_bwa_available, ungzip
-
 
 class BWASubTest( BWA ):
     ''' Test subclass to get around required_args exception '''
@@ -321,3 +322,67 @@ class TestBWAIndex( BaseBWA ):
         eq_( 0, bwa.run() )
         assert not os.path.exists( 'bwa.sai' )
         os.chdir( '..' )
+
+class TestCompileReads( BaseBWA ):
+    @classmethod
+    def setUpClass( self ):
+        super( TestCompileReads, self ).setUpClass()
+        self.fastq, self.sff, self.ref = util.unpack_files()
+
+    def _isfastq( self, filepath ):
+        ''' Simple verification that file is a fastq '''
+        with open( filepath ) as fh:
+            first = fh.read(1)
+            eq_( first, '@' )
+
+    def test_noreads( self ):
+        ''' Directory empty '''
+        os.mkdir( 'emptydir' )
+        outfile = bwa.compile_reads( 'emptydir' )
+        eq_( [], outfile )
+
+    def test_paramsinglesff( self ):
+        ''' Make sure single sff works '''
+        outfile = bwa.compile_reads( self.sff )
+        self._isfastq( outfile )
+
+    def test_paramsinglefastq( self ):
+        ''' Input fastq should not be changed '''
+        stat = os.stat( self.fastq )
+        outfile = bwa.compile_reads( self.fastq )
+        eq_( stat.st_mtime, os.stat( self.fastq ).st_mtime )
+        eq_( stat.st_ino, os.stat( outfile ).st_ino )
+
+    def test_paramdirsffonly( self ):
+        ''' Directory of only sff files '''
+        os.mkdir( 'sffs' )
+        os.symlink( self.sff, os.path.join( 'sffs', 'sff1.sff' ) )
+        os.symlink( self.sff, os.path.join( 'sffs', 'sff2.sff' ) )
+        outfile = bwa.compile_reads( 'sffs' )
+        expected_readcount = seqio.reads_in_file( self.sff ) * 2
+
+        self._isfastq( outfile )
+        eq_( expected_readcount, seqio.reads_in_file( outfile ) )
+
+    def test_paramdirfastqonly( self ):
+        ''' Directory of only fastq '''
+        os.mkdir( 'fastq' )
+        os.symlink( self.sff, os.path.join( 'fastq', 'fq1.fastq' ) )
+        os.symlink( self.sff, os.path.join( 'fastq', 'fq2.fastq' ) )
+        outfile = bwa.compile_reads( 'fastq' )
+        expected_readcount = seqio.reads_in_file( self.sff ) * 2
+
+        self._isfastq( outfile )
+        eq_( expected_readcount, seqio.reads_in_file( outfile ) )
+
+    def test_paramdirmixed( self ):
+        ''' Directory of sff & fastq '''
+        os.mkdir( 'mixed' )
+        os.symlink( self.sff, os.path.join( 'mixed', 'sff1.sff' ) )
+        os.symlink( self.fastq, os.path.join( 'mixed', 'fq1.fastq' ) )
+        outfile = bwa.compile_reads( 'mixed' )
+        expected_readcount = seqio.reads_in_file( self.sff ) + \
+            seqio.reads_in_file( self.fastq )
+
+        self._isfastq( outfile )
+        eq_( expected_readcount, seqio.reads_in_file( outfile ) )

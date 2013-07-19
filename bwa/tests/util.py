@@ -25,6 +25,7 @@ def test_bwa_available( ):
     assert get_bwa_path != ''
 
 def ungzip( filepath, outpath=None ):
+    ''' TODO: Should check to make sure it needs to actually ungzip a file '''
     if outpath is None:
         bn, ext = os.path.splitext( filepath )
     else:
@@ -34,6 +35,13 @@ def ungzip( filepath, outpath=None ):
             fo.write( fi.read() )
     return bn
 
+def unpack_files( ):
+    fastq = ungzip( INPUT_PATH )
+    sff = ungzip( INPUT_SFF_PATH )
+    ref = REF_PATH
+    return (fastq, sff, ref)
+
+    
 class Base( object ):
     @classmethod
     def setUpClass( self ):
@@ -45,7 +53,7 @@ class Base( object ):
         os.chdir( '/' )
         shutil.rmtree( self.tempdir )
 
-    def create_fakefasta( self, filename, readno ):
+def create_fakefasta( self, filename, readno ):
         ''' Create readno fasta sequences '''
         with open( filename, 'w' ) as fh:
             for i in range( readno ):

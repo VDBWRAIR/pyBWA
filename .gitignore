@@ -8,3 +8,6 @@ primers.fna
 sff.fasta
 sff.fastq
 sffone.fasta
+bwa/_version.py
+bwa/tests/input.sff
+test.py

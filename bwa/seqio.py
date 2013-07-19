@@ -21,7 +21,7 @@ def sffs_to_fastq( sffs, output='sff.fastq' ):
     '''
     # Has to be a list
     if not isinstance( sffs, list ):
-        raise ValueError( "{} is not a list" )
+        raise ValueError( "{} is not a list".format(sffs) )
 
     # Empty list gets ignored
     if not sffs:
@@ -86,3 +86,16 @@ def concat_files( filelist, outputfile ):
     if os.stat( outputfile ).st_size == 0:
         os.unlink( outputfile )
         raise EmptyFileError( "Empty files given to concat" )
+
+def reads_in_file( filename ):
+    ftype = 'fasta'
+    with open( filename ) as fh:
+        firstline = fh.readline()
+        if firstline.startswith( '>' ):
+            ftype = 'fasta'
+        elif firstline.startswith( '@' ):
+            ftype = 'fastq'
+        else:
+            ftype = 'sff'
+    return sum( [1 for seq in SeqIO.parse( filename, ftype )] )
+

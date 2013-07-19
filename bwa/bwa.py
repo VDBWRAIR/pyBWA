@@ -8,8 +8,74 @@ import os
 import os.path
 import sys
 import glob
+import fnmatch
+
+import seqio
 
 logger = logging.getLogger( __name__ )
+
+def compile_reads( reads, outputfile='reads.fastq' ):
+    '''
+        Compile all given reads from directory of reads or just return reads if it is fastq
+        If reads is sff file then convert to fastq
+
+        @param reads - Directory/file of .fastq or .sff
+        @param outputfile - File path of single fastq file output
+        @return fastq with all reads from reads
+    '''
+    if os.path.isdir( reads ):
+        reads = seqio.get_reads( reads )
+    elif isinstance( reads, str ):
+        # Single item list
+        if os.path.splitext( reads )[1] == '.sff':
+            # Just convert the single reads
+            return seqio.sffs_to_fastq( [reads] )
+        else:
+            # Already fastq so nothing to do
+            return reads
+    
+    # Empty read list
+    if not len( reads ):
+        return []
+
+    # Get only sff files to convert
+    sffs = fnmatch.filter( reads, '*.sff' )
+    if len( sffs ):
+        logger.info( "Concatting and Converting {} to fastq".format(sffs) )
+        sfffastq = [seqio.sffs_to_fastq( sffs )]
+    else:
+        sfffastq = []
+
+    fastqs = fnmatch.filter( reads, '*.fastq' )
+    seqio.concat_files( fastqs + sfffastq, outputfile )
+    return outputfile
+
+def compile_refs( refs ):
+    '''
+        Compile all given refs into a single file to be indexed
+
+        @param refs - Directory/file of fasta formatted files
+        @return path to concatted indexed reference file
+    '''
+    ref_files = []
+    ref_extensions = ('.fa', '.fasta', '.fna', '.fas')
+
+    if os.path.isdir( refs ):
+        logger.info( "Compiling and concatting refs inside of {}".format(refs) )
+        files = glob.glob( os.path.join( refs, '*' ) )
+        logger.debug( "All files inside of {}: {}".format( files, refs ) )
+        ref_files = [f for f in files if os.path.splitext(f)[1] in ref_extensions]
+        logger.debug( "Filtering files down to only files with extensions in {}".format(ref_extensions) )
+        logger.debug( "Filtered files to concat: {}".format( ref_files ) )
+        try:
+            seqio.concat_files( ref_files, 'reference.fa' )
+        except (OSError,IOError,ValueError) as e:
+            logger.error( "There was an error with the references in {}".format(refs) )
+            logger.error( str( e ) )
+            sys.exit(1)
+        return 'reference.fa'
+    else:
+        return refs
 
 def is_indexed( ref ):
     '''
@@ -211,16 +277,6 @@ class BWA( object ):
         if not os.path.exists( inputpath ):
             raise ValueError( "{} is not a valid input file".format(inputpath) )
 
-    def reads_in_file( self, filename ):
-        ftype = 'fasta'
-        with open( filename ) as fh:
-            firstline = fh.readline()
-            if firstline.startswith( '>' ):
-                ftype = 'fasta'
-            elif firstline.startswith( '@' ):
-                ftype = 'fastq'
-        return sum( [1 for seq in SeqIO.parse( filename, ftype )] )
-
 class BWAIndex( BWA ):
     def __init__( self, *args, **kwargs ):
         ''' Injects index command and runs super '''
@@ -235,7 +291,7 @@ class BWAIndex( BWA ):
         if len( self.args ) != 1:
             raise ValueError( "bwa index needs only 1 parameter" )
         self.validate_input( self.args[0] )
-        if self.reads_in_file( self.args[0] ) == 0:
+        if seqio.reads_in_file( self.args[0] ) == 0:
             raise ValueError( "{} is not a valid file to index".format(self.args[0]) )
 
     def bwa_return_code( self, stderr ):
@@ -311,10 +367,10 @@ class BWAMem( BWA ):
             total_bp += int( bps )
 
         # Count num of read sequences
-        expected_reads = self.reads_in_file( self.args[1] )
+        expected_reads = seqio.reads_in_file( self.args[1] )
         # If mates file was given count them too
         if len( self.args ) == 3:
-            expected_reads += self.reads_in_file( self.args[2] )
+            expected_reads += seqio.reads_in_file( self.args[2] )
 
         # No lines found in input file?
         if expected_reads == 0:
