@@ -54,6 +54,29 @@ def compile_refs( refs ):
     else:
         return refs
 
+def is_indexed( ref ):
+    ref_ext = ('.amb', '.ann', '.bwt', '.pac', '.sa')
+    ref_indexes = glob.glob( ref + '.*' )
+
+    return len( ref_indexes ) != 0 and all( [True for index in ref_indexes if os.path.splitext( index )[1] in ref_ext] )
+
+def index_ref( ref ):
+    # Don't reindex an already indexed ref
+    if is_indexed( ref ):
+        return
+
+    logger.info( "Indexing {}".format(ref) )
+    try:
+        ret = bwa.BWAIndex( ref, bwa_path=bwa.which_bwa() ).run()
+    except ValueError as e:
+        logger.error( e )
+
+    if ret != 0:
+        logger.error( "Error running bwa index on {}".format( ref ) )
+        sys.exit( ret )
+    else:
+        logger.info( "bwa index ran on {}".format(ref) )
+
 def main():
     args = parse_args().__dict__
 
@@ -71,17 +94,8 @@ def main():
     args['bwa_path'] = bwa.which_bwa()
 
     ret = 1
-    try:
-        ret = bwa.BWAIndex( ref_file, bwa_path=bwa.which_bwa() ).run()
-    except ValueError as e:
-        logger.error( e )
+    ret = index_ref( ref_file )
 
-    if ret != 0:
-        logger.error( "Error running bwa index on {}".format( ref_file ) )
-        sys.exit( ret )
-    else:
-        logger.info( "bwa index ran on {}".format(ref_file) )
-        
     ret = 1
     try:
         if mates_path:
