@@ -60,6 +60,7 @@ def concat_files( filelist, outputfile ):
         @raises OSError if any fo filelist or outputfile cannot be read/written
         @raises EmptyFileError if outputfile ends up empty
         @raises ValueError if any of filelist are not valid files or if outputfile is not valid
+
         @param filelist - List of valid files to cat into outputfile.
         @param outputfile - File path to put concatted output into
     '''
@@ -68,6 +69,9 @@ def concat_files( filelist, outputfile ):
 
     if not isinstance( outputfile, str ):
         raise ValueError( "{} is not a valid output path".format(outputfile) )
+
+    if outputfile in filelist:
+        raise ValueError( "{} contains the outputfile".format(filelist) )
 
     # Concat all the found files
     # Could raise IOError or OSError as we are using open on files

@@ -329,6 +329,10 @@ class TestCompileReads( BaseBWA ):
         super( TestCompileReads, self ).setUpClass()
         self.fastq, self.sff, self.ref = util.unpack_files()
 
+    def tearDown( self ):
+        for fq in glob.glob( '*.fastq' ):
+            os.unlink( fq )
+
     def _isfastq( self, filepath ):
         ''' Simple verification that file is a fastq '''
         with open( filepath ) as fh:
@@ -386,3 +390,39 @@ class TestCompileReads( BaseBWA ):
 
         self._isfastq( outfile )
         eq_( expected_readcount, seqio.reads_in_file( outfile ) )
+
+    def test_targetbug1_1( self ):
+        '''
+            Targets a bug where compile_reads would generate 2 identical
+            fastq files(reads.fastq and sff.fastq)
+        '''
+        os.mkdir( 'sffs1' )
+        os.symlink( self.sff, os.path.join( 'sffs1', 'sff1.sff' ) )
+        os.symlink( self.sff, os.path.join( 'sffs1', 'sff2.sff' ) )
+        outfile = bwa.compile_reads( 'sffs1' )
+        fastqs = glob.glob( '*.fastq' )
+        assert len( fastqs ) == 1, fastqs
+
+    def test_targetbug1_2( self ):
+        '''
+            Targets a bug where compile_reads would generate 2 identical
+            fastq files(reads.fastq and sff.fastq)
+        '''
+        os.mkdir( 'sffs2' )
+        os.symlink( self.sff, os.path.join( 'sffs2', 'sff1.sff' ) )
+        os.symlink( self.sff, os.path.join( 'sffs2', 'fq1.fastq' ) )
+        outfile = bwa.compile_reads( 'sffs2' )
+        fastqs = glob.glob( '*.fastq' )
+        assert len( fastqs ) == 1, fastqs
+
+    def test_targetbug1_3( self ):
+        '''
+            Targets a bug where compile_reads would generate 2 identical
+            fastq files(reads.fastq and sff.fastq)
+        '''
+        os.mkdir( 'sffs3' )
+        sffpth = os.path.join( 'sffs3', 'sff1.sff' )
+        os.symlink( self.sff, sffpth )
+        outfile = bwa.compile_reads( sffpth )
+        fastqs = glob.glob( '*.fastq' )
+        assert len( fastqs ) == 1, fastqs

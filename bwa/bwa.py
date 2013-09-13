@@ -26,12 +26,13 @@ def compile_reads( reads, outputfile='reads.fastq' ):
     if os.path.isdir( reads ):
         reads = seqio.get_reads( reads )
     elif isinstance( reads, str ):
-        # Single item list
+        # Single read file given
         if os.path.splitext( reads )[1] == '.sff':
             # Just convert the single reads
-            return seqio.sffs_to_fastq( [reads] )
+            return seqio.sffs_to_fastq( [reads], outputfile )
         else:
             # Already fastq so nothing to do
+            #  This is a bad assumption
             return reads
     
     # Empty read list
@@ -42,12 +43,15 @@ def compile_reads( reads, outputfile='reads.fastq' ):
     sffs = fnmatch.filter( reads, '*.sff' )
     if len( sffs ):
         logger.info( "Concatting and Converting {} to fastq".format(sffs) )
-        sfffastq = [seqio.sffs_to_fastq( sffs )]
+        sfffastq = [seqio.sffs_to_fastq( sffs, 'sff.' + outputfile )]
     else:
         sfffastq = []
 
     fastqs = fnmatch.filter( reads, '*.fastq' )
+    # Concat fastq files and sff converted fastq files into
+    #  outputfile
     seqio.concat_files( fastqs + sfffastq, outputfile )
+    os.unlink( 'sff.' + outputfile )
     return outputfile
 
 def compile_refs( refs ):
@@ -96,12 +100,12 @@ def index_ref( ref ):
         @param ref - Reference file path to index
     '''
     # Don't reindex an already indexed ref
-    if bwa.is_indexed( ref ):
+    if is_indexed( ref ):
         return
 
     logger.info( "Indexing {}".format(ref) )
     try:
-        ret = bwa.BWAIndex( ref, bwa_path=bwa.which_bwa() ).run()
+        ret = BWAIndex( ref, bwa_path=which_bwa() ).run()
     except ValueError as e:
         logger.error( e )
 

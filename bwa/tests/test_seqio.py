@@ -188,3 +188,13 @@ class TestConcatFiles( SeqIOBase ):
         seqio.concat_files( filelist, 'output' )
         with open( 'output' ) as fh:
             eq_( content * 3, fh.read() )
+
+    @raises(ValueError)
+    def test_inputsameoutput( self ):
+        '''
+            Should check that filenames are not the same
+            If they are, it could result in an infinite loop that
+             will consume all available free space
+        '''
+        filelist = self.writesomefiles( 'Text\n'*1000, 1 )
+        seqio.concat_files( filelist, filelist[0] )
