@@ -43,6 +43,48 @@ class SeqIOBase( util.Base ):
         os.chdir( self.tempdir )
         shutil.rmtree( 'tests' )
 
+class TestReadsInFile( SeqIOBase ):
+    def readsinfiletest( self, fafile, expectedlines ):
+        eq_( expectedlines, seqio.reads_in_file( fafile ) )
+
+    def test_readsinfile_fasta( self ):
+        ''' Make sure simple fasta is counted correctly '''
+        fh = open( 'fasta.fa', 'w' )
+        fh.write( '>seq1\nABCD\n>seq2ACDE\n' )
+        fh.close()
+        self.readsinfiletest( 'fasta.fa', 2 )
+
+    def test_readsinfile_fastq( self ):
+        ''' Make sure a simple fastq file is counted correctly '''
+        fh = open( 'fasta.fastq', 'w' )
+        fh.write( '@seq1\nABCD\n+\nIIII\n@seq2\nACDE\n+\nIIII\n' )
+        fh.close()
+        self.readsinfiletest( 'fasta.fastq', 2 )
+
+    def test_readsinfile_fastq2( self ):
+        ''' @ symbol is part of quality and can occur at beginning of lines '''
+        fh = open( 'fasta.fastq', 'w' )
+        fh.write( '@seq1\nABCD\n+\n@III\n@seq2\nACDE\n+\nIIII\n' )
+        fh.close()
+        self.readsinfiletest( 'fasta.fastq', 2 )
+
+    @raises(ValueError)
+    def test_invalidinput( self ):
+        ''' Check to make sure it detects non sff,fasta,fastq '''
+        fh = open( 'fasta.fastq', 'w' )
+        fh.write( 'not a valid input' )
+        fh.close()
+        self.readsinfiletest( 'fasta.fastq', 0 )
+
+    @raises(ValueError)
+    def test_invalidinput( self ):
+        ''' Check to make sure it detects non sff,fasta,fastq '''
+        fh = open( 'fasta.fastq', 'w' )
+        fh.write( 'not a valid input\nnope' )
+        fh.close()
+        self.readsinfiletest( 'fasta.fastq', 0 )
+
+
 class TestSffsToFastq( SeqIOBase ):
     @raises( ValueError )
     def test_invalid_sff( self ):

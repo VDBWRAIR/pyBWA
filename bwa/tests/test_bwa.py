@@ -157,30 +157,6 @@ this has Usage:  bwa
         path = self.mkbwa( 'BWA' )
         eq_( 0, BWASubTest( bwa_path=path, command='mem' ).run() )
     
-    def readsinfiletest( self, fafile, expectedlines ):
-        eq_( self.inst.reads_in_file( fafile ), expectedlines )
-
-    def test_readsinfile_fasta( self ):
-        ''' Make sure simple fasta is counted correctly '''
-        fh = open( 'fasta.fa', 'w' )
-        fh.write( '>seq1\nABCD\n>seq2ACDE\n' )
-        fh.close()
-        self.readsinfiletest( 'fasta.fa', 2 )
-
-    def test_readsinfile_fastq( self ):
-        ''' Make sure a simple fastq file is counted correctly '''
-        fh = open( 'fasta.fastq', 'w' )
-        fh.write( '@seq1\nABCD\n+\nIIII\n@seq2\nACDE\n+\nIIII\n' )
-        fh.close()
-        self.readsinfiletest( 'fasta.fastq', 2 )
-
-    def test_readsinfile_fastq2( self ):
-        ''' @ symbol is part of quality and can occur at beginning of lines '''
-        fh = open( 'fasta.fastq', 'w' )
-        fh.write( '@seq1\nABCD\n+\n@III\n@seq2\nACDE\n+\nIIII\n' )
-        fh.close()
-        self.readsinfiletest( 'fasta.fastq', 2 )
-
 class TestBWAMem( BaseBWA ):
     @classmethod
     def setUpClass( self ):
@@ -249,16 +225,17 @@ class TestBWAMem( BaseBWA ):
     def test_bwamem_run( self ):
         ''' Make sure it actually runs bwa with correct input '''
         infa = ungzip( INPUT_PATH )
+        bwa.index_ref( REF_PATH )
         mem = BWAMem( REF_PATH, infa, bwa_path=BWA_PATH )
         eq_( 0, mem.run() )
 
+    @raises(ValueError)
     def test_run_nonfastainput( self ):
         ''' Invalid fasta input file(file exists but not fasta/fastq '''
         filename = 'test.fa'
         with open( filename, 'w' ) as fh:
             fh.write( 'not a fasta' )
         bwa = BWAMem( REF_PATH, filename, bwa_path=BWA_PATH, command='mem' )
-        eq_( 1, bwa.run() )
 
     def test_bwareturncode_count( self ):
         ''' Fixed tests for pattern matching '''
@@ -269,7 +246,7 @@ class TestBWAMem( BaseBWA ):
         ]
         for reads, testline in tests:
             filename = 'fasta{}.fa'.format(reads)
-            self.create_fakefasta( filename, reads )
+            util.create_fakefasta( filename, reads )
             print "Reads In File: {}".format(reads)
             print "Read Lines: {}".format(testline)
             bwa = BWAMem( self.fa, filename, bwa_path=BWA_PATH )
@@ -337,13 +314,29 @@ class TestCompileReads( BaseBWA ):
         ''' Simple verification that file is a fastq '''
         with open( filepath ) as fh:
             first = fh.read(1)
-            eq_( first, '@' )
+            eq_( '@', first )
 
     def test_noreads( self ):
         ''' Directory empty '''
         os.mkdir( 'emptydir' )
         outfile = bwa.compile_reads( 'emptydir' )
         eq_( [], outfile )
+
+    def test_outputbasename( self ):
+        ''' Test that the outputfile parameter works with just a basename '''
+        os.mkdir( 'basename' )
+        os.symlink( self.sff, os.path.join( 'basename', 'sff1.sff' ) )
+        outfile = bwa.compile_reads( 'basename', 'outputfile.fastq' )
+        eq_( 'outputfile.fastq', outfile )
+        eq_( seqio.reads_in_file( self.sff ), seqio.reads_in_file( outfile ) )
+
+    def test_outputabsrelpath( self ):
+        ''' Test that the outputfile parameter works with a relative or abs path '''
+        os.mkdir( 'absrel' )
+        os.symlink( self.sff, os.path.join( 'absrel', 'sff1.sff' ) )
+        outfile = bwa.compile_reads( 'absrel', 'absrel/outputfile.fastq' )
+        eq_( 'absrel/outputfile.fastq', outfile )
+        eq_( seqio.reads_in_file( self.sff ), seqio.reads_in_file( 'absrel/outputfile.fastq' ) )
 
     def test_paramsinglesff( self ):
         ''' Make sure single sff works '''
@@ -371,8 +364,8 @@ class TestCompileReads( BaseBWA ):
     def test_paramdirfastqonly( self ):
         ''' Directory of only fastq '''
         os.mkdir( 'fastq' )
-        os.symlink( self.sff, os.path.join( 'fastq', 'fq1.fastq' ) )
-        os.symlink( self.sff, os.path.join( 'fastq', 'fq2.fastq' ) )
+        os.symlink( self.fastq, os.path.join( 'fastq', 'fq1.fastq' ) )
+        os.symlink( self.fastq, os.path.join( 'fastq', 'fq2.fastq' ) )
         outfile = bwa.compile_reads( 'fastq' )
         expected_readcount = seqio.reads_in_file( self.sff ) * 2
 

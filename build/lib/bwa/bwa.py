@@ -41,28 +41,17 @@ def compile_reads( reads, outputfile='reads.fastq' ):
 
     # Get only sff files to convert
     sffs = fnmatch.filter( reads, '*.sff' )
-    tmpsfffastq = None
     if len( sffs ):
-        tmpsfffastq = os.path.join(
-            os.path.dirname( outputfile ),
-            'sff.' + os.path.basename( outputfile )
-        )
         logger.info( "Concatting and Converting {} to fastq".format(sffs) )
-        sfffastq = [seqio.sffs_to_fastq( sffs, tmpsfffastq )]
+        sfffastq = [seqio.sffs_to_fastq( sffs, 'sff.' + outputfile )]
     else:
         sfffastq = []
 
     fastqs = fnmatch.filter( reads, '*.fastq' )
     # Concat fastq files and sff converted fastq files into
     #  outputfile
-    converts = fastqs + sfffastq
-    logger.info( "Concatting {} to {}".format(
-            converts, outputfile
-        )
-    )
     seqio.concat_files( fastqs + sfffastq, outputfile )
-    if tmpsfffastq is not None:
-        os.unlink( tmpsfffastq )
+    os.unlink( 'sff.' + outputfile )
     return outputfile
 
 def compile_refs( refs ):
@@ -289,12 +278,7 @@ class BWA( object ):
             raise ValueError( "{} does not exist".format(fastapath) )
 
     def validate_input( self, inputpath ):
-        if os.path.exists( inputpath ):
-            try:
-                seqio.seqfile_type( inputpath )
-            except ValueError:
-                raise ValueError( "{} is not a valid input file".format(inputpath) )
-        else:
+        if not os.path.exists( inputpath ):
             raise ValueError( "{} is not a valid input file".format(inputpath) )
 
 class BWAIndex( BWA ):
