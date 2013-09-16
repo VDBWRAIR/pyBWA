@@ -8,3 +8,5 @@ primers.fna
 sff.fasta
 sff.fastq
 sffone.fasta
+bwa/_version.py
+*.sff
