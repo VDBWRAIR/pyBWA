@@ -1,0 +1,21 @@
+#!/bin/bash
+
+## Convert sai file to indexed bam
+if [ -z $1 ]
+then
+    echo "Please provide an sai file to convert"
+    exit 1
+fi
+
+# Filename no extension
+filename=${1%.sai}
+
+# Convert sai to bam
+samtools view -Sb "${filename}.sai" > "${filename}_unsorted.bam"
+
+# Sort bam file
+samtools sort "${filename}_unsorted.bam" "${filename}"
+rm "${filename}_unsorted.bam"
+
+# Index bam file
+samtools index "${filename}.bam"

@@ -91,7 +91,7 @@ def concat_files( filelist, outputfile ):
         os.unlink( outputfile )
         raise EmptyFileError( "Empty files given to concat" )
 
-def seqfile_type( filename ):
+def reads_in_file( filename ):
     ftype = 'fasta'
     with open( filename ) as fh:
         firstline = fh.readline()
@@ -99,16 +99,7 @@ def seqfile_type( filename ):
             ftype = 'fasta'
         elif firstline.startswith( '@' ):
             ftype = 'fastq'
-        elif firstline.startswith( '.sff' ):
-            ftype = 'sff'
         else:
-            raise ValueError( "{} not a valid sequence file".format(
-                    filename
-                )
-            )
-    return ftype
-
-def reads_in_file( filename ):
-    ftype = seqfile_type( filename )
+            ftype = 'sff'
     return sum( [1 for seq in SeqIO.parse( filename, ftype )] )
 

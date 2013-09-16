@@ -1,5 +1,7 @@
 from nose.tools import eq_, raises
 from ..bwa import BWA, BWAMem, BWAIndex
+from .. import bwa
+from .. import seqio
 
 import tempfile
 import shutil
@@ -10,7 +12,6 @@ import glob
 
 import util
 from util import get_bwa_path, INPUT_PATH, REF_PATH, BWA_PATH, test_bwa_available, ungzip
-
 
 class BWASubTest( BWA ):
     ''' Test subclass to get around required_args exception '''
@@ -156,30 +157,6 @@ this has Usage:  bwa
         path = self.mkbwa( 'BWA' )
         eq_( 0, BWASubTest( bwa_path=path, command='mem' ).run() )
     
-    def readsinfiletest( self, fafile, expectedlines ):
-        eq_( self.inst.reads_in_file( fafile ), expectedlines )
-
-    def test_readsinfile_fasta( self ):
-        ''' Make sure simple fasta is counted correctly '''
-        fh = open( 'fasta.fa', 'w' )
-        fh.write( '>seq1\nABCD\n>seq2ACDE\n' )
-        fh.close()
-        self.readsinfiletest( 'fasta.fa', 2 )
-
-    def test_readsinfile_fastq( self ):
-        ''' Make sure a simple fastq file is counted correctly '''
-        fh = open( 'fasta.fastq', 'w' )
-        fh.write( '@seq1\nABCD\n+\nIIII\n@seq2\nACDE\n+\nIIII\n' )
-        fh.close()
-        self.readsinfiletest( 'fasta.fastq', 2 )
-
-    def test_readsinfile_fastq2( self ):
-        ''' @ symbol is part of quality and can occur at beginning of lines '''
-        fh = open( 'fasta.fastq', 'w' )
-        fh.write( '@seq1\nABCD\n+\n@III\n@seq2\nACDE\n+\nIIII\n' )
-        fh.close()
-        self.readsinfiletest( 'fasta.fastq', 2 )
-
 class TestBWAMem( BaseBWA ):
     @classmethod
     def setUpClass( self ):
@@ -248,16 +225,17 @@ class TestBWAMem( BaseBWA ):
     def test_bwamem_run( self ):
         ''' Make sure it actually runs bwa with correct input '''
         infa = ungzip( INPUT_PATH )
+        bwa.index_ref( REF_PATH )
         mem = BWAMem( REF_PATH, infa, bwa_path=BWA_PATH )
         eq_( 0, mem.run() )
 
+    @raises(ValueError)
     def test_run_nonfastainput( self ):
         ''' Invalid fasta input file(file exists but not fasta/fastq '''
         filename = 'test.fa'
         with open( filename, 'w' ) as fh:
             fh.write( 'not a fasta' )
         bwa = BWAMem( REF_PATH, filename, bwa_path=BWA_PATH, command='mem' )
-        eq_( 1, bwa.run() )
 
     def test_bwareturncode_count( self ):
         ''' Fixed tests for pattern matching '''
@@ -268,7 +246,7 @@ class TestBWAMem( BaseBWA ):
         ]
         for reads, testline in tests:
             filename = 'fasta{}.fa'.format(reads)
-            self.create_fakefasta( filename, reads )
+            util.create_fakefasta( filename, reads )
             print "Reads In File: {}".format(reads)
             print "Read Lines: {}".format(testline)
             bwa = BWAMem( self.fa, filename, bwa_path=BWA_PATH )
@@ -321,3 +299,123 @@ class TestBWAIndex( BaseBWA ):
         eq_( 0, bwa.run() )
         assert not os.path.exists( 'bwa.sai' )
         os.chdir( '..' )
+
+class TestCompileReads( BaseBWA ):
+    @classmethod
+    def setUpClass( self ):
+        super( TestCompileReads, self ).setUpClass()
+        self.fastq, self.sff, self.ref = util.unpack_files()
+
+    def tearDown( self ):
+        for fq in glob.glob( '*.fastq' ):
+            os.unlink( fq )
+
+    def _isfastq( self, filepath ):
+        ''' Simple verification that file is a fastq '''
+        with open( filepath ) as fh:
+            first = fh.read(1)
+            eq_( '@', first )
+
+    def test_noreads( self ):
+        ''' Directory empty '''
+        os.mkdir( 'emptydir' )
+        outfile = bwa.compile_reads( 'emptydir' )
+        eq_( [], outfile )
+
+    def test_outputbasename( self ):
+        ''' Test that the outputfile parameter works with just a basename '''
+        os.mkdir( 'basename' )
+        os.symlink( self.sff, os.path.join( 'basename', 'sff1.sff' ) )
+        outfile = bwa.compile_reads( 'basename', 'outputfile.fastq' )
+        eq_( 'outputfile.fastq', outfile )
+        eq_( seqio.reads_in_file( self.sff ), seqio.reads_in_file( outfile ) )
+
+    def test_outputabsrelpath( self ):
+        ''' Test that the outputfile parameter works with a relative or abs path '''
+        os.mkdir( 'absrel' )
+        os.symlink( self.sff, os.path.join( 'absrel', 'sff1.sff' ) )
+        outfile = bwa.compile_reads( 'absrel', 'absrel/outputfile.fastq' )
+        eq_( 'absrel/outputfile.fastq', outfile )
+        eq_( seqio.reads_in_file( self.sff ), seqio.reads_in_file( 'absrel/outputfile.fastq' ) )
+
+    def test_paramsinglesff( self ):
+        ''' Make sure single sff works '''
+        outfile = bwa.compile_reads( self.sff )
+        self._isfastq( outfile )
+
+    def test_paramsinglefastq( self ):
+        ''' Input fastq should not be changed '''
+        stat = os.stat( self.fastq )
+        outfile = bwa.compile_reads( self.fastq )
+        eq_( stat.st_mtime, os.stat( self.fastq ).st_mtime )
+        eq_( stat.st_ino, os.stat( outfile ).st_ino )
+
+    def test_paramdirsffonly( self ):
+        ''' Directory of only sff files '''
+        os.mkdir( 'sffs' )
+        os.symlink( self.sff, os.path.join( 'sffs', 'sff1.sff' ) )
+        os.symlink( self.sff, os.path.join( 'sffs', 'sff2.sff' ) )
+        outfile = bwa.compile_reads( 'sffs' )
+        expected_readcount = seqio.reads_in_file( self.sff ) * 2
+
+        self._isfastq( outfile )
+        eq_( expected_readcount, seqio.reads_in_file( outfile ) )
+
+    def test_paramdirfastqonly( self ):
+        ''' Directory of only fastq '''
+        os.mkdir( 'fastq' )
+        os.symlink( self.fastq, os.path.join( 'fastq', 'fq1.fastq' ) )
+        os.symlink( self.fastq, os.path.join( 'fastq', 'fq2.fastq' ) )
+        outfile = bwa.compile_reads( 'fastq' )
+        expected_readcount = seqio.reads_in_file( self.sff ) * 2
+
+        self._isfastq( outfile )
+        eq_( expected_readcount, seqio.reads_in_file( outfile ) )
+
+    def test_paramdirmixed( self ):
+        ''' Directory of sff & fastq '''
+        os.mkdir( 'mixed' )
+        os.symlink( self.sff, os.path.join( 'mixed', 'sff1.sff' ) )
+        os.symlink( self.fastq, os.path.join( 'mixed', 'fq1.fastq' ) )
+        outfile = bwa.compile_reads( 'mixed' )
+        expected_readcount = seqio.reads_in_file( self.sff ) + \
+            seqio.reads_in_file( self.fastq )
+
+        self._isfastq( outfile )
+        eq_( expected_readcount, seqio.reads_in_file( outfile ) )
+
+    def test_targetbug1_1( self ):
+        '''
+            Targets a bug where compile_reads would generate 2 identical
+            fastq files(reads.fastq and sff.fastq)
+        '''
+        os.mkdir( 'sffs1' )
+        os.symlink( self.sff, os.path.join( 'sffs1', 'sff1.sff' ) )
+        os.symlink( self.sff, os.path.join( 'sffs1', 'sff2.sff' ) )
+        outfile = bwa.compile_reads( 'sffs1' )
+        fastqs = glob.glob( '*.fastq' )
+        assert len( fastqs ) == 1, fastqs
+
+    def test_targetbug1_2( self ):
+        '''
+            Targets a bug where compile_reads would generate 2 identical
+            fastq files(reads.fastq and sff.fastq)
+        '''
+        os.mkdir( 'sffs2' )
+        os.symlink( self.sff, os.path.join( 'sffs2', 'sff1.sff' ) )
+        os.symlink( self.sff, os.path.join( 'sffs2', 'fq1.fastq' ) )
+        outfile = bwa.compile_reads( 'sffs2' )
+        fastqs = glob.glob( '*.fastq' )
+        assert len( fastqs ) == 1, fastqs
+
+    def test_targetbug1_3( self ):
+        '''
+            Targets a bug where compile_reads would generate 2 identical
+            fastq files(reads.fastq and sff.fastq)
+        '''
+        os.mkdir( 'sffs3' )
+        sffpth = os.path.join( 'sffs3', 'sff1.sff' )
+        os.symlink( self.sff, sffpth )
+        outfile = bwa.compile_reads( sffpth )
+        fastqs = glob.glob( '*.fastq' )
+        assert len( fastqs ) == 1, fastqs
