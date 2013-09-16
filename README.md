@@ -53,3 +53,13 @@ retstat = mem.run( 'myoutput.sai' )
 if retstat != 0:
     sys.stderr.write( "Error running bwa" )
 ```
+
+## Executables
+
+pyBWA comes with some utility executables that wrap the functionality of BWA mapping
+in a single easy to use executable.
+
+* map_bwa.py wraps up bwa mem mapping in an easy to use single executable
+  * It utilizes bwa.index_ref, bwa.compile_reads and bwa.compile_refs to easily 
+    add SFF files, fastq files and fasta reference files to the mapping
+* sai_to_bam converts the output sai sam file to an indexed/sorted bam file
