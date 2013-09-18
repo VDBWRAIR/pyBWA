@@ -9,6 +9,7 @@ import os.path
 import sys
 import glob
 import fnmatch
+import tempfile
 
 import seqio
 
@@ -331,8 +332,9 @@ class BWAIndex( BWA ):
             Call super and then remove output file
             hackish
         '''
-        ret = super( BWAIndex, self ).run( 'removeme.sai' )
-        os.unlink( 'removeme.sai' )
+        fd, tmpf = tempfile.mkstemp()
+        ret = super( BWAIndex, self ).run( tmpf )
+        os.unlink( tmpf )
         return ret
 
 class BWAMem( BWA ):
