@@ -112,7 +112,7 @@ def index_ref( ref ):
     '''
     # Don't reindex an already indexed ref
     if is_indexed( ref ):
-        return
+        return True
 
     logger.info( "Indexing {}".format(ref) )
     try:
@@ -122,9 +122,10 @@ def index_ref( ref ):
 
     if ret != 0:
         logger.error( "Error running bwa index on {}".format( ref ) )
-        sys.exit( ret )
+        return False
     else:
         logger.info( "bwa index ran on {}".format(ref) )
+        return True
 
 def which_bwa( ):
     '''
