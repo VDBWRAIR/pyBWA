@@ -23,7 +23,6 @@ then
     echo "Please provide an sai file to convert" >&2
     exit 1
 fi
-echo "Using ${sam_path}"
 
 # Filename sans .sai extension
 filename=${1%.sai}
@@ -53,3 +52,4 @@ then
     echo "Failed to index ${filename}.bam" >&2
     exit $?
 fi
+echo "Completed converting ${filename}.sai to ${filename}.bam"
