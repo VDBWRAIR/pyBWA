@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Initially set sam_path to default path
-sam_path=$(which samtools)
+sam_path=$(which samtools 2>/dev/null)
 
 while getopts ":p:" opt
 do
