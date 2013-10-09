@@ -118,6 +118,8 @@ def index_ref( ref, bwa_path=None ):
 
     if bwa_path is None:
         bwa_path = which_bwa()
+        logger.debug( "BWA path not specified so using default " \
+            " path {}".format( bwa_path ) )
 
     logger.info( "Indexing {}".format(ref) )
     try:
