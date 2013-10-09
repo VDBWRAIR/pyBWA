@@ -17,6 +17,13 @@ do
 done
 shift $((OPTIND - 1))
 
+if [ -z "$sam_path" ]
+then
+    echo "Please provide a path to samtools using -p option"
+    echo " or modify your PATH variable to include it"
+    exit 1
+fi
+
 ## Convert sai file to indexed bam
 if [ -z $1 ]
 then
