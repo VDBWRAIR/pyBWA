@@ -1,5 +1,3 @@
-from Bio import SeqIO
-
 import logging
 import re
 from subprocess import Popen, PIPE, check_output
@@ -10,6 +8,13 @@ import sys
 import glob
 import fnmatch
 import tempfile
+
+try:
+    from Bio import SeqIO
+except ImportError:
+    print "Please ensure biopython is installed"
+    print "Try pip install biopython"
+    sys.exit(1)
 
 import seqio
 

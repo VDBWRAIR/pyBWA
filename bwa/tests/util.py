@@ -53,8 +53,9 @@ class Base( object ):
         os.chdir( '/' )
         shutil.rmtree( self.tempdir )
 
-    def create_fakefasta( self, filename, readno ):
-        ''' Create readno fasta sequences '''
-        with open( filename, 'w' ) as fh:
-            for i in range( readno ):
-                fh.write( '>seq{}\nATGC\n'.format(i) )
+
+def create_fakefasta( filename, readno ):
+    ''' Create readno fasta sequences '''
+    with open( filename, 'w' ) as fh:
+        for i in range( readno ):
+            fh.write( '>seq{}\nATGC\n'.format(i) )

@@ -4,6 +4,13 @@ Python libraries to interact with BWA mapper
 
 The goal is to make it very easy to run bwa from any python script
 
+## Install
+
+```bash
+git clone https://github.com/VDBWRAIR/pyBWA.git
+pip install biopython
+python setup.py install
+```
 
 ## Simple Example
 
