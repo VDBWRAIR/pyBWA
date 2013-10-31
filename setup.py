@@ -6,6 +6,7 @@ from fnmatch import fnmatch
 import subprocess
 import sys
 import glob
+from bwa.install import install_bwa
 
 # Version file to store version information in
 ver_file = os.path.join( 'bwa', '_version.py' )
@@ -13,6 +14,10 @@ ver_file = os.path.join( 'bwa', '_version.py' )
 # The major.minor version number
 # Set to 0 here as we set/read it later on
 __version__ = 0
+
+# Install bwa into bin directory so it will be copied with all of the other
+# scripts inside of bin
+install_bwa( 'bin/' )
 
 # Utility function to read the README file.
 # Used for the long_description. It's nice, because now 1) we have a top level
@@ -22,7 +27,8 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 def scripts( ):
-    return [os.path.join( 'bin', f ) for f in os.listdir( 'bin' ) if not fnmatch( f, '*.swp' ) and not fnmatch( f, '*.pyc' )]
+    return [os.path.join( 'bin', f ) for f in os.listdir( 'bin' ) \
+        if not fnmatch( f, '*.swp' ) and not fnmatch( f, '*.pyc' )]
 
 def git_branch():
     ''' Return the current checked out branch name '''
@@ -91,3 +97,4 @@ setup(
         'biopython'
     ],
 )
+

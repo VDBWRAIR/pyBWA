@@ -218,6 +218,7 @@ class TestBWAMem( BaseBWA ):
     def test_optionalthird( self ):
         ''' Test that given a correct third argument it still runs '''
         infa = ungzip( INPUT_PATH )
+        bwa.index_ref( REF_PATH )
         # I don't have a mates file so just use infa again
         mem = BWAMem( REF_PATH, infa, infa, bwa_path=BWA_PATH )
         eq_( 0, mem.run() )

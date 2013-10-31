@@ -45,7 +45,7 @@ class SeqIOBase( util.Base ):
 
 class TestReadsInFile( SeqIOBase ):
     def readsinfiletest( self, fafile, expectedlines ):
-        eq_( expectedlines, seqio.reads_in_file( fafile ) )
+        eq_( seqio.reads_in_file( fafile ), expectedlines )
 
     def test_readsinfile_fasta( self ):
         ''' Make sure simple fasta is counted correctly '''

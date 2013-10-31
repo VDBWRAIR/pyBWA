@@ -11,4 +11,7 @@ sffone.fasta
 bwa/_version.py
 bwa/tests/input.sff
 test.py
-build*
+bin/bwa
+bin/qualfa2fq.pl
+bin/xa2multi.pl
+build/

@@ -70,6 +70,8 @@ def compile_refs( refs ):
     '''
         Compile all given refs into a single file to be indexed
 
+        @TODO -- Write tests
+
         @param refs - Directory/file of fasta formatted files
         @return path to concatted indexed reference file
     '''
