@@ -112,19 +112,25 @@ def is_indexed( ref ):
 
     return len( ref_indexes ) != 0 and all( [True for index in ref_indexes if os.path.splitext( index )[1] in ref_ext] )
 
-def index_ref( ref ):
+def index_ref( ref, bwa_path=None ):
     '''
         Indexes a given reference
 
         @param ref - Reference file path to index
+        @param bwa_path - Optional path to bwa executable
     '''
     # Don't reindex an already indexed ref
     if is_indexed( ref ):
         return True
 
+    if bwa_path is None:
+        bwa_path = which_bwa()
+        logger.debug( "BWA path not specified so using default " \
+            " path {}".format( bwa_path ) )
+
     logger.info( "Indexing {}".format(ref) )
     try:
-        ret = BWAIndex( ref, bwa_path=which_bwa() ).run()
+        ret = BWAIndex( ref, bwa_path=bwa_path ).run()
     except ValueError as e:
         logger.error( e )
 
