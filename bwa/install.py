@@ -6,6 +6,23 @@ import subprocess
 import tarfile
 import tempfile
 import shutil
+from os.path import *
+
+def which( bin ):
+    '''
+        Return path to bin if it is in the system path and executable or None if it is not
+    
+        @param bin - Binary to attempt to find in path
+
+        @returns the joined path from system path and executable if found. None otherwise
+    '''
+    for p in os.environ['PATH'].split(':'):
+        # Try this path
+        p = join( p, bin )
+        # Is this path valid and executable?
+        if os.access( p, os.X_OK ):
+            return p
+    return None
 
 def get_bwa( version ):
     '''
@@ -68,7 +85,7 @@ def install_bwa( where_to_install='/usr/local/bin', version='0.7.4', upgrade=Fal
             install
     '''
     # Don't reinstall unless told to
-    if not upgrade and os.access( os.path.join( where_to_install, 'bwa' ), os.R_OK ):
+    if not upgrade and which( 'bwa' ):
         return
     binaries = ('bwa', 'qualfa2fq.pl', 'xa2multi.pl')
     print "Downloading bwa"
