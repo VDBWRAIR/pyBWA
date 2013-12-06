@@ -68,7 +68,7 @@ def install_bwa( where_to_install='/usr/local/bin', version='0.7.4', upgrade=Fal
             install
     '''
     # Don't reinstall unless told to
-    if not upgrade and os.path.exists( os.path.join( where_to_install, 'bwa' ) ):
+    if not upgrade and os.access( os.path.join( where_to_install, 'bwa' ), os.R_OK ):
         return
     binaries = ('bwa', 'qualfa2fq.pl', 'xa2multi.pl')
     print "Downloading bwa"
