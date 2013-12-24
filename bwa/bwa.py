@@ -121,6 +121,7 @@ def index_ref( ref, bwa_path=None ):
     '''
     # Don't reindex an already indexed ref
     if is_indexed( ref ):
+        logger.debug( "{} is already indexed".format(ref) )
         return True
 
     if bwa_path is None:
@@ -343,7 +344,6 @@ class BWAIndex( BWA ):
     def run( self ):
         '''
             Call super and then remove output file
-            hackish
         '''
         fd, tmpf = tempfile.mkstemp()
         ret = super( BWAIndex, self ).run( tmpf )

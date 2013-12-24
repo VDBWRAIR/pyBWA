@@ -287,7 +287,7 @@ class TestBWAIndex( BaseBWA ):
         bwa = BWAIndex( ref, bwa_path=BWA_PATH )
         eq_( 0, bwa.run() )
         indexes = glob.glob( ref + '.*' ) 
-        assert indexes != []
+        eq_( len(indexes), 5, "Did not create all index files" )
 
     def test_nooutputfile( self ):
         ''' Ensure no output file is created '''
