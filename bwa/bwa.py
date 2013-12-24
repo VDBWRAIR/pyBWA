@@ -107,10 +107,19 @@ def is_indexed( ref ):
         @param - Refrence file name
         @return True if ref is indexed, False if not
     '''
-    ref_ext = ('.amb', '.ann', '.bwt', '.pac', '.sa')
+    ref_ext = set(['.amb', '.ann', '.bwt', '.pac', '.sa'])
     ref_indexes = glob.glob( ref + '.*' )
+    logger.debug( "Indexes found for {}: {}".format(ref,ref_indexes) )
 
-    return len( ref_indexes ) != 0 and all( [True for index in ref_indexes if os.path.splitext( index )[1] in ref_ext] )
+    if len( ref_indexes ) == 0:
+        return False
+
+    ext = set([os.path.splitext(f)[1] for f in ref_indexes])
+    intersec = ref_ext & ext
+    
+    # Return true only if the intersection of the found extensions is equal to
+    # the expected ref_ext set
+    return intersec == ref_ext
 
 def index_ref( ref, bwa_path=None ):
     '''

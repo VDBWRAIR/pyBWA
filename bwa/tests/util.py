@@ -45,7 +45,7 @@ def unpack_files( ):
 class Base( object ):
     @classmethod
     def setUpClass( self ):
-        self.tempdir = tempfile.mkdtemp()
+        self.tempdir = tempfile.mkdtemp(prefix='bwatest')
         os.chdir( self.tempdir )
 
     @classmethod
@@ -59,3 +59,4 @@ def create_fakefasta( filename, readno ):
     with open( filename, 'w' ) as fh:
         for i in range( readno ):
             fh.write( '>seq{}\nATGC\n'.format(i) )
+    return filename

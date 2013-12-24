@@ -13,6 +13,13 @@ import glob
 import util
 from util import get_bwa_path, INPUT_PATH, REF_PATH, BWA_PATH, test_bwa_available, ungzip
 
+def create( filepath ):
+    open(filepath,'w').close()
+def createrefindexes( filepath ):
+    ext = ('amb','ann','bwt','pac','sa')
+    for e in ext:
+        create( filepath + '.' + e )
+
 class BWASubTest( BWA ):
     ''' Test subclass to get around required_args exception '''
     def required_args( self ):
@@ -167,8 +174,9 @@ class TestBWAMem( BaseBWA ):
         fh = open( self.fa, 'w' )
         fh.write( '>seq1\nATGC' )
         fh.close()
-        fh = open( self.fai, 'w' )
-        fh.close()
+        createrefindexes( self.fai )
+        #fh = open( self.fai, 'w' )
+        #fh.close()
         # Create non indexed fasta
         self.fa2 = os.path.join( self.tempdir, 'input2.fa' )
         shutil.copy( self.fa, self.fa2 )
@@ -420,3 +428,37 @@ class TestCompileReads( BaseBWA ):
         outfile = bwa.compile_reads( sffpth )
         fastqs = glob.glob( '*.fastq' )
         assert len( fastqs ) == 1, fastqs
+
+from nose.plugins.attrib import attr
+@attr('current')
+class TestISIndexed(BaseBWA):
+    def setUp(self):
+        self.t = tempfile.mkdtemp(prefix='isindex')
+        os.chdir( self.t )
+        self.fake_ref = util.create_fakefasta( 'ref.fa', 1 )
+        self.index_ext = ('amb','ann','bwt','pac','sa')
+
+    def tearDown(self):
+        os.chdir( '/' )
+        shutil.rmtree( self.t )
+
+    def _CII( self, ref ):
+        from ..bwa import is_indexed
+        return is_indexed( ref )
+
+    def test_all_indexes_already_exist( self ):
+        for ext in self.index_ext:
+            create( '{}.{}'.format( self.fake_ref, ext ) )
+        eq_( True, self._CII( self.fake_ref ) )
+
+    def test_missing_one_of_indexes( self ):
+        for ext in self.index_ext[1:]:
+            create( '{}.{}'.format( self.fake_ref, ext ) )
+        eq_( False, self._CII( self.fake_ref ) )
+
+    def test_reference_has_fai_file_only( self ):
+        create( '{}.{}'.format( self.fake_ref, 'fai' ) )
+        eq_( False, self._CII( self.fake_ref ) )
+
+    def test_missing_all_indexes( self ):
+        eq_( False, self._CII( self.fake_ref ) )
