@@ -9,12 +9,7 @@ import glob
 import fnmatch
 import tempfile
 
-try:
-    from Bio import SeqIO
-except ImportError:
-    print "Please ensure biopython is installed"
-    print "Try pip install biopython"
-    sys.exit(1)
+from Bio import SeqIO
 
 import seqio
 

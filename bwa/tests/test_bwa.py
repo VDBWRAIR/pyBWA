@@ -1,7 +1,7 @@
 from nose.tools import eq_, raises
-from ..bwa import BWA, BWAMem, BWAIndex
-from .. import bwa
-from .. import seqio
+from bwa import BWA, BWAMem, BWAIndex
+import bwa
+from bwa import seqio
 
 import tempfile
 import shutil

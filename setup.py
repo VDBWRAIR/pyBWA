@@ -1,12 +1,12 @@
 import os
 import os.path
-from distutils.core import setup
+from setuptools import setup, find_packages
 
 from fnmatch import fnmatch
 import subprocess
 import sys
 import glob
-from bwa.install import install_bwa
+#from bwa.install import install_bwa
 
 # Version file to store version information in
 ver_file = os.path.join( 'bwa', '_version.py' )
@@ -17,7 +17,7 @@ __version__ = 0
 
 # Install bwa into bin directory so it will be copied with all of the other
 # scripts inside of bin
-install_bwa( 'bin/' )
+#install_bwa( 'bin/' )
 
 # Utility function to read the README file.
 # Used for the long_description. It's nice, because now 1) we have a top level
@@ -88,14 +88,16 @@ setup(
     description = ("Python wrapper for bwa mapper"),
     keywords = "bwa walter reed research python library",
     url = "https://github.com/VDBWRAIR/pyBWA",
-    packages = [
-        'bwa',
-    ],
+    packages = find_packages(),
     scripts = scripts(),
     data_files = [
     ],
-    requires = [
+    install_requires = [
         'biopython'
     ],
+    tests_require = [
+        'nose',
+        'mock'
+    ]
 )
 
