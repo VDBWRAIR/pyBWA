@@ -443,7 +443,7 @@ class TestISIndexed(BaseBWA):
         shutil.rmtree( self.t )
 
     def _CII( self, ref ):
-        from ..bwa import is_indexed
+        from bwa.bwa import is_indexed
         return is_indexed( ref )
 
     def test_all_indexes_already_exist( self ):
