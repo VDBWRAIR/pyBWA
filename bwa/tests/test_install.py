@@ -5,8 +5,7 @@ from os.path import *
 import os
 
 import util
-
-from .. import install
+from bwa import install
 
 class Base( util.Base ):
     pass

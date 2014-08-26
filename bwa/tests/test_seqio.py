@@ -7,7 +7,7 @@ import os.path
 import glob
 
 import util
-from .. import seqio
+from bwa import seqio
 
 def is_fastq( fqpath ):
     try:
