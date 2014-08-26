@@ -33,7 +33,8 @@ def get_bwa( version ):
     '''
     tempd = tempfile.mkdtemp()
     dlpath = os.path.join( tempd, 'bwa-{}.tar.bz2'.format(version) )
-    base_url = 'http://sourceforge.net/projects/bio-bwa/files/bwa-{}.tar.bz2/download'
+    base_url = 'https://github.com/lh3/bwa/archive/{}.tar.gz'
+    print "Downloading {} as {}".format(base_url.format(version), dlpath)
     filename, info = urllib.urlretrieve( base_url.format( version ), dlpath )
     return filename
 
@@ -74,7 +75,7 @@ def unpack_dl( archive ):
             " unpacked" )
     return os.path.join( arch_dir, sourced[0] )
 
-def install_bwa( where_to_install='/usr/local/bin', version='0.7.4', upgrade=False ):
+def install_bwa( where_to_install='/usr/local/bin', version='0.7.5', upgrade=False ):
     '''
         Downloads and installs version of bwa into where_to_install
         Just copies the executables to where_to_install after compile
