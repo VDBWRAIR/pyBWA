@@ -4,6 +4,10 @@ Python libraries to interact with BWA mapper
 
 The goal is to make it very easy to run bwa from any python script
 
+
+[![Build Status](https://travis-ci.org/VDBWRAIR/pyBWA.svg?branch=master)](https://travis-ci.org/VDBWRAIR/pyBWA)
+
+
 ## Requires
 
 bwa in your environmental PATH
@@ -73,6 +77,3 @@ in a single easy to use executable.
   * It utilizes bwa.index_ref, bwa.compile_reads and bwa.compile_refs to easily 
     add SFF files, fastq files and fasta reference files to the mapping
 * sai_to_bam converts the output sai sam file to an indexed/sorted bam file
-
-
-[![Build Status](https://travis-ci.org/VDBWRAIR/pyBWA.svg?branch=master)](https://travis-ci.org/VDBWRAIR/pyBWA)
