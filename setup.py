@@ -93,6 +93,7 @@ setup(
     data_files = [
     ],
     setup_requires = [
+        'biopython'
         'pyBWA',
     ],
     install_requires = [
