@@ -4,7 +4,7 @@ python:
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
     - python setup.py install
-    - python -c "from bwa import install; install.install_bwa();"
+    - python -c "from bwa import install; install.install_bwa('bin/');"
 # # command to run tests, e.g. python setup.py test
 script:
     - python setup.py test
