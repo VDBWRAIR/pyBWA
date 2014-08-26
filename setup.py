@@ -6,7 +6,7 @@ from fnmatch import fnmatch
 import subprocess
 import sys
 import glob
-from bwa.install import install_bwa
+#from bwa.install import install_bwa
 
 # Version file to store version information in
 ver_file = os.path.join( 'bwa', '_version.py' )
@@ -17,7 +17,7 @@ __version__ = 0
 
 # Install bwa into bin directory so it will be copied with all of the other
 # scripts inside of bin
-install_bwa( 'bin/' )
+#install_bwa( 'bin/' )
 
 # Utility function to read the README file.
 # Used for the long_description. It's nice, because now 1) we have a top level
@@ -93,8 +93,6 @@ setup(
     data_files = [
     ],
     setup_requires = [
-        'biopython'
-        'pyBWA',
     ],
     install_requires = [
         'biopython'
