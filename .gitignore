@@ -16,3 +16,4 @@ bin/qualfa2fq.pl
 bin/xa2multi.pl
 build/
 env/
+*.egg-info

@@ -8,12 +8,7 @@ import sys
 import glob
 from bwa.install import install_bwa
 
-# Version file to store version information in
-ver_file = os.path.join( 'bwa', '_version.py' )
-
-# The major.minor version number
-# Set to 0 here as we set/read it later on
-__version__ = 0
+from bwa._version import __version__
 
 # Install bwa into bin directory so it will be copied with all of the other
 # scripts inside of bin
@@ -46,39 +41,6 @@ def git_branch():
         return branch
     else:
         return ''
-
-def set_version():
-    ''' Sets the version using the current tag and revision in the git repo '''
-    if os.path.isdir(".git"):
-        try:
-            p = subprocess.Popen(["git", "describe", "--tags", "--always"], stdout=subprocess.PIPE)
-        except EnvironmentError:
-            print "unable to run git"
-            return
-        stdout = p.communicate()[0]
-        if p.returncode != 0:
-            print "unable to run git"
-            return
-
-        # Full version string
-        ver = stdout.strip()
-        branch = git_branch()
-        if branch:
-            ver += '.' + git_branch()
-    else:
-        # Hack in case no .git dir'
-        ver = '0.0.0'
-
-    with open( ver_file, 'w' ) as fh:
-        global __version__
-        __version__ = ver
-        fh.write( "__version__ = '%s'\n" % __version__ )
-
-    return True
-
-# Setup
-if set_version() is None:
-    sys.exit( -1 )
 
 setup(
     name = "pyBWA",
