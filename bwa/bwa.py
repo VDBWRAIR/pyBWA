@@ -133,6 +133,10 @@ def index_ref( ref, bwa_path=None ):
         logger.debug( "BWA path not specified so using default " \
             " path {}".format( bwa_path ) )
 
+    if not os.path.exists(ref):
+        logger.critical('Reference path {0} cannot be read'.format(ref))
+        return False
+
     logger.info( "Indexing {}".format(ref) )
     try:
         ret = BWAIndex( ref, bwa_path=bwa_path ).run()

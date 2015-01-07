@@ -237,6 +237,10 @@ class TestBWAMem( BaseBWA ):
         mem = BWAMem( REF_PATH, infa, bwa_path=BWA_PATH )
         eq_( 0, mem.run() )
 
+    def test_ref_is_missing(self):
+        r = bwa.index_ref('/path/to/missing.fa')
+        eq_(r, False)
+
     @raises(ValueError)
     def test_run_nonfastainput( self ):
         ''' Invalid fasta input file(file exists but not fasta/fastq '''
@@ -294,6 +298,7 @@ class TestBWAIndex( BaseBWA ):
         bwa = BWAIndex( ref, bwa_path=BWA_PATH )
         eq_( 0, bwa.run() )
         indexes = glob.glob( ref + '.*' ) 
+        print indexes
         eq_( len(indexes), 5, "Did not create all index files" )
 
     def test_nooutputfile( self ):
