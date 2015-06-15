@@ -1,6 +1,6 @@
 import logging
 import re
-from subprocess import Popen, PIPE, check_output
+from subprocess import Popen, PIPE
 import tempfile
 import os
 import os.path
@@ -10,6 +10,7 @@ import fnmatch
 import tempfile
 
 from Bio import SeqIO
+import sh
 
 import seqio
 
@@ -48,7 +49,7 @@ def compile_reads( reads, outputfile='reads.fastq' ):
             os.path.dirname( outputfile ),
             'sff.' + os.path.basename( outputfile )
         )
-        logger.info( "Concatting and Converting {} to fastq".format(sffs) )
+        logger.info( "Concatting and Converting {0} to fastq".format(sffs) )
         sfffastq = [seqio.sffs_to_fastq( sffs, tmpsfffastq )]
     else:
         sfffastq = []
@@ -57,7 +58,7 @@ def compile_reads( reads, outputfile='reads.fastq' ):
     # Concat fastq files and sff converted fastq files into
     #  outputfile
     converts = fastqs + sfffastq
-    logger.info( "Concatting {} to {}".format(
+    logger.info( "Concatting {0} to {1}".format(
             converts, outputfile
         )
     )
@@ -79,16 +80,16 @@ def compile_refs( refs ):
     ref_extensions = ('.fa', '.fasta', '.fna', '.fas')
 
     if os.path.isdir( refs ):
-        logger.info( "Compiling and concatting refs inside of {}".format(refs) )
+        logger.info( "Compiling and concatting refs inside of {0}".format(refs) )
         files = glob.glob( os.path.join( refs, '*' ) )
-        logger.debug( "All files inside of {}: {}".format( files, refs ) )
+        logger.debug( "All files inside of {0}: {1}".format( files, refs ) )
         ref_files = [f for f in files if os.path.splitext(f)[1] in ref_extensions]
-        logger.debug( "Filtering files down to only files with extensions in {}".format(ref_extensions) )
-        logger.debug( "Filtered files to concat: {}".format( ref_files ) )
+        logger.debug( "Filtering files down to only files with extensions in {0}".format(ref_extensions) )
+        logger.debug( "Filtered files to concat: {0}".format( ref_files ) )
         try:
             seqio.concat_files( ref_files, 'reference.fa' )
         except (OSError,IOError,ValueError) as e:
-            logger.error( "There was an error with the references in {}".format(refs) )
+            logger.error( "There was an error with the references in {0}".format(refs) )
             logger.error( str( e ) )
             sys.exit(1)
         return 'reference.fa'
@@ -104,7 +105,7 @@ def is_indexed( ref ):
     '''
     ref_ext = set(['.amb', '.ann', '.bwt', '.pac', '.sa'])
     ref_indexes = glob.glob( ref + '.*' )
-    logger.debug( "Indexes found for {}: {}".format(ref,ref_indexes) )
+    logger.debug( "Indexes found for {0}: {1}".format(ref,ref_indexes) )
 
     if len( ref_indexes ) == 0:
         return False
@@ -125,42 +126,42 @@ def index_ref( ref, bwa_path=None ):
     '''
     # Don't reindex an already indexed ref
     if is_indexed( ref ):
-        logger.debug( "{} is already indexed".format(ref) )
+        logger.debug( "{0} is already indexed".format(ref) )
         return True
 
     if bwa_path is None:
         bwa_path = which_bwa()
         logger.debug( "BWA path not specified so using default " \
-            " path {}".format( bwa_path ) )
+            " path {0}".format( bwa_path ) )
 
     if not os.path.exists(ref):
         logger.critical('Reference path {0} cannot be read'.format(ref))
         return False
 
-    logger.info( "Indexing {}".format(ref) )
+    logger.info( "Indexing {0}".format(ref) )
     try:
         ret = BWAIndex( ref, bwa_path=bwa_path ).run()
     except ValueError as e:
         logger.error( e )
 
     if ret != 0:
-        logger.error( "Error running bwa index on {}".format( ref ) )
+        logger.error( "Error running bwa index on {0}".format( ref ) )
         return False
     else:
-        logger.info( "bwa index ran on {}".format(ref) )
+        logger.info( "bwa index ran on {0}".format(ref) )
         return True
 
 def which_bwa( ):
     '''
         Return output of which bwa
     '''
-    return check_output( ['which', 'bwa'] ).strip()
+    return str(sh.which('bwa')).strip()
 
 def bwa_usage():
     '''
         Returns the output of just running bwa mem from command line
     '''
-    return check_output( ['bwa', 'mem'] ).strip()
+    return str(sh.bwa('mem')).strip()
 
 class BWA( object ):
     # Options that are required
@@ -215,7 +216,7 @@ class BWA( object ):
                 del self.kwargs[op]
         except KeyError as e:
             # Detects if a parameter is missing
-            raise ValueError( "{} is a required parameter".format(op) )
+            raise ValueError( "{0} is a required parameter".format(op) )
 
     def compile_bwa_options( self ):
         '''
@@ -286,17 +287,17 @@ class BWA( object ):
             Subclass implementation should return 1 for any other failures
         '''
         if not os.path.exists( required_options[0] ):
-            raise ValueError( "{} is not a valid bwa path".format( required_options[0] ) )
+            raise ValueError( "{0} is not a valid bwa path".format( required_options[0] ) )
 
         # Run bwa
         with open( output_file, 'wb' ) as fh:
             cmd = required_options + options_list + args_list
-            logger.info( "Running {}".format( " ".join( cmd ) ) )
+            logger.info( "Running {0}".format( " ".join( cmd ) ) )
             p = Popen( cmd, stdout=fh, stderr=PIPE )
 
             # Get the output
             stdout, stderr = p.communicate()
-        logger.debug( "STDERR: {}".format(stderr) )
+        logger.debug( "STDERR: {0}".format(stderr) )
 
         # Parse the status
         return self.bwa_return_code( stderr )
@@ -308,18 +309,18 @@ class BWA( object ):
             @param fastapath - Path to fasta file
         '''
         if not is_indexed( fastapath ):
-            raise ValueError( "{} does not have an index".format(fastapath) )
+            raise ValueError( "{0} does not have an index".format(fastapath) )
         if not os.path.exists( fastapath ):
-            raise ValueError( "{} does not exist".format(fastapath) )
+            raise ValueError( "{0} does not exist".format(fastapath) )
 
     def validate_input( self, inputpath ):
         if os.path.exists( inputpath ):
             try:
                 seqio.seqfile_type( inputpath )
             except ValueError:
-                raise ValueError( "{} is not a valid input file".format(inputpath) )
+                raise ValueError( "{0} is not a valid input file".format(inputpath) )
         else:
-            raise ValueError( "{} is not a valid input file".format(inputpath) )
+            raise ValueError( "{0} is not a valid input file".format(inputpath) )
 
 class BWAIndex( BWA ):
     def __init__( self, *args, **kwargs ):
@@ -336,7 +337,7 @@ class BWAIndex( BWA ):
             raise ValueError( "bwa index needs only 1 parameter" )
         self.validate_input( self.args[0] )
         if seqio.reads_in_file( self.args[0] ) == 0:
-            raise ValueError( "{} is not a valid file to index".format(self.args[0]) )
+            raise ValueError( "{0} is not a valid file to index".format(self.args[0]) )
 
     def bwa_return_code( self, stderr ):
         ''' 
@@ -421,7 +422,7 @@ class BWAMem( BWA ):
             return 1
 
         if total_reads != expected_reads:
-            logger.warning( "Expecting BWA to process {} reads but processed {}".format(expected_reads, total_reads) )
+            logger.warning( "Expecting BWA to process {0} reads but processed {1}".format(expected_reads, total_reads) )
             return 1
 
         return super( BWAMem, self ).bwa_return_code( output )

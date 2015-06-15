@@ -21,7 +21,7 @@ def sffs_to_fastq( sffs, output='sff.fastq' ):
     '''
     # Has to be a list
     if not isinstance( sffs, list ):
-        raise ValueError( "{} is not a list".format(sffs) )
+        raise ValueError( "{0} is not a list".format(sffs) )
 
     # Empty list gets ignored
     if not sffs:
@@ -33,9 +33,9 @@ def sffs_to_fastq( sffs, output='sff.fastq' ):
             for sff in sffs:
                     SeqIO.write( SeqIO.parse( sff, 'sff' ), fh, 'fastq' )
     except (OSError, IOError) as e:
-        raise ValueError( "{} is not a valid output file".format(output) )
+        raise ValueError( "{0} is not a valid output file".format(output) )
     except ValueError as e:
-        raise ValueError( "{} is not a valid sff file".format(sff) )
+        raise ValueError( "{0} is not a valid sff file".format(sff) )
     
     return output
 
@@ -48,7 +48,7 @@ def get_reads( dir_path ):
         @return list of fastq and sff files found in dir_path. Each has dir_path prefixed to them. Empty list if none found
     '''
     if not os.path.isdir( dir_path ):
-        raise ValueError( "{} is not a valid directory".format(dir_path) )
+        raise ValueError( "{0} is not a valid directory".format(dir_path) )
     return glob.glob( os.path.join( dir_path, '*.sff' ) ) + glob.glob( os.path.join( dir_path, '*.fastq' ) ) 
 
 def concat_files( filelist, outputfile ):
@@ -65,13 +65,13 @@ def concat_files( filelist, outputfile ):
         @param outputfile - File path to put concatted output into
     '''
     if not isinstance( filelist, list ) or len( filelist ) == 0:
-        raise ValueError( "{} is not a valid list of files to concat".format(filelist) )
+        raise ValueError( "{0} is not a valid list of files to concat".format(filelist) )
 
     if not isinstance( outputfile, str ):
-        raise ValueError( "{} is not a valid output path".format(outputfile) )
+        raise ValueError( "{0} is not a valid output path".format(outputfile) )
 
     if outputfile in filelist:
-        raise ValueError( "{} contains the outputfile".format(filelist) )
+        raise ValueError( "{0} contains the outputfile".format(filelist) )
 
     # Concat all the found files
     # Could raise IOError or OSError as we are using open on files
@@ -83,7 +83,7 @@ def concat_files( filelist, outputfile ):
                     shutil.copyfileobj( fr, fh )
             except (IOError,OSError) as e:
                 if e.errno == 2:
-                    raise ValueError( "{} does not exist".format(f) )
+                    raise ValueError( "{0} does not exist".format(f) )
                 os.unlink( outputfile )
                 raise e
 
@@ -102,7 +102,7 @@ def seqfile_type( filename ):
         elif firstline.startswith( '.sff' ):
             ftype = 'sff'
         else:
-            raise ValueError( "{} not a valid sequence file".format(
+            raise ValueError( "{0} not a valid sequence file".format(
                     filename
                 )
             )

@@ -46,8 +46,8 @@ def main():
         sys.exit( ret )
     else:
         logger.info( "Finished running bwa" )
-        logger.debug( "Ref: {} Input: {} Mates: {}".format(ref_file,read_path,mates_path) )
-        logger.debug( "Options: {}".format(args) )
+        logger.debug( "Ref: {0} Input: {1} Mates: {2}".format(ref_file,read_path,mates_path) )
+        logger.debug( "Options: {0}".format(args) )
 
 def parse_args( ):
     parser = ArgumentParser( epilog='Python wrapper around bwa mem' )
