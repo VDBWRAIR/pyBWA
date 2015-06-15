@@ -2,9 +2,11 @@ language: python
 python:
   - "2.7"
   - "2.6"
-# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then pip install unittest2 argparse; fi
+    - pip install -r requirements.txt
     - python setup.py install
-# # command to run tests, e.g. python setup.py test
 script:
-    - nosetests
+    - nosetests tests --with-coverage --cover-erase --cover-package=bwa
+after_success:
+    - coveralls
