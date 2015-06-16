@@ -6,7 +6,7 @@ The goal is to make it very easy to run bwa from any python script
 
 
 [![Build Status](https://travis-ci.org/VDBWRAIR/pyBWA.svg?branch=master)](https://travis-ci.org/VDBWRAIR/pyBWA)
-
+[![Coverage Status](https://coveralls.io/repos/VDBWRAIR/pyBWA/badge.svg?branch=dev)](https://coveralls.io/r/VDBWRAIR/pyBWA?branch=dev)
 
 ## Requires
 

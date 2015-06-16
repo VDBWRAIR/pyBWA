@@ -32,9 +32,9 @@ def get_bwa( version ):
         @returns location of downloaded file
     '''
     tempd = tempfile.mkdtemp()
-    dlpath = os.path.join( tempd, 'bwa-{}.tar.bz2'.format(version) )
-    base_url = 'https://github.com/lh3/bwa/archive/{}.tar.gz'
-    print "Downloading {} as {}".format(base_url.format(version), dlpath)
+    dlpath = os.path.join( tempd, 'bwa-{0}.tar.bz2'.format(version) )
+    base_url = 'https://github.com/lh3/bwa/archive/{0}.tar.gz'
+    print "Downloading {0} as {1}".format(base_url.format(version), dlpath)
     filename, info = urllib.urlretrieve( base_url.format( version ), dlpath )
     return filename
 
@@ -47,7 +47,7 @@ def compile_bwa( path_to_bwasource ):
     cmd = 'make'
     ret = subprocess.call( [cmd], cwd=path_to_bwasource )
     if ret != 0:
-        raise ValueError( "Failed to compile bwa in directory {}\n".format(
+        raise ValueError( "Failed to compile bwa in directory {0}\n".format(
             path_to_bwasource) )
 
 def unpack_dl( archive ):
@@ -61,8 +61,8 @@ def unpack_dl( archive ):
     # Get archive extension
     arch, arch_ext = os.path.splitext( archive )
     if arch_ext[1:] not in supported_extensions:
-        raise ValueError( "Could not determine archive type for {} Supported " \
-            "extensions are {}.".format( archive, supported_extensions) )
+        raise ValueError( "Could not determine archive type for {0} Supported " \
+            "extensions are {0}.".format( archive, supported_extensions) )
 
     tf = tarfile.open( archive )
     tf.extractall( os.path.dirname( archive ) )
